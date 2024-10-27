@@ -140,5 +140,34 @@ def is_download_url(url):
     
     return True
 
+# If the url conforms to is_download_url, returns the domain
+def get_url_domain(url):
+    assert is_download_url(url), "url provided to get_url_domain is not a download url: {}".format(url)
+    protocol = "https://"
+    without_protocol = strict_lstrip(url, protocol)
+
+    slash_idx = without_protocol.find("/")
+    if slash_idx < 0:
+        # No file path
+        return False
+
+    domain = without_protocol[:slash_idx]
+    path = without_protocol[slash_idx + 1:]
+    return domain
+
+# If the url conforms to is_download_url, returns the path
+def get_url_path(url):
+    assert is_download_url(url), "url provided to get_url_path is not a download url: {}".format(url)
+    protocol = "https://"
+    without_protocol = strict_lstrip(url, protocol)
+
+    slash_idx = without_protocol.find("/")
+    if slash_idx < 0:
+        # No file path
+        return False
+
+    path = without_protocol[slash_idx + 1:]
+    return path
+
 if __name__ == "__main__":
     print(get_minecraft_path())
