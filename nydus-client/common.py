@@ -63,7 +63,7 @@ def get_home_dir():
     if home_dir == "":
         raise OSError("User's home directory is an empty string.")
 
-    if not os.is_dir(home_dir):
+    if not os.path.isdir(home_dir):
         raise OSError("User's home directory {} does not exist.".format(home_dir))
 
     return home_dir
@@ -77,8 +77,9 @@ def get_minecraft_path():
 
     minecraft_path = "{}/.minecraft".format(home_dir)
 
-    if not os.is_dir(minecraft_path):
+    if not os.path.isdir(minecraft_path):
         raise OSError("User's Minecraft directory does not exist at {}".format(minecraft_path))
+    return minecraft_path
 
 # Python's default lstrip, given a to_strip string of more than one character,
 # will strip everything off the original string until it finds a character
