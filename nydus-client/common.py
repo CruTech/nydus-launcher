@@ -4,6 +4,7 @@
 
 import os
 import pwd
+import re
 
 # Raises OSError if something's wrong with pwd database entry
 def get_pwd_entry(uid=None):
@@ -108,6 +109,36 @@ def strict_rstrip(orig, to_strip):
 
     new = orig[:len(orig) - len(to_strip)]
     return new
+
+# We expect url is https, and ends in a file path, since that seems to be the case
+# for all urls indicating files to download
+def is_download_url(url):
+
+    assert isinstance(url, str), "non-string provided as url to is_download_url: {}".format(url)
+
+    protocol = "https://"
+
+    if not url.startswith(protocol):
+        # Not https
+        return False
+
+    without_protocol = strict_lstrip(url, protocol)
+
+    slash_idx = without_protocol.find("/")
+    if slash_idx < 0:
+        # No file path
+        return False
+
+    domain = without_protocol[:slash_idx]
+    path = without_protocol[slash_idx + 1:]
+
+    if len(domain) < 1:
+        return False
+
+    if len(path) < 1:
+        return False
+    
+    return True
 
 if __name__ == "__main__":
     print(get_minecraft_path())
