@@ -105,6 +105,32 @@ class TestStrictRstrip(unittest.TestCase):
         with self.assertRaises(AssertionError):
             strict_rstrip(0.22, "cut")
 
+    def test_absent(self):
+        self.assertEqual(strict_rstrip("notinhere", "yes"), "notinhere")
+
+    def test_py(self):
+        self.assertEqual(strict_rstrip("nydus.py", ".py"), "nydus")
+
+    def test_repeat(self):
+        self.assertEqual(strict_rstrip("myovermyovermyover", "myover"), "myovermyover")
+
+    def test_double(self):
+        self.assertEqual(strict_rstrip("colloquial", "loquial"), "col")
+
+    def test_mismatch(self):
+        self.assertEqual(strict_rstrip("aabcdddeeeffffg", "dddeeffffg"), "aabcdddeeeffffg")
+
+    def test_special(self):
+        self.assertEqual(strict_rstrip("!-+=_./?", "_./?"), "!-+=")
+
+    def test_overrun(self):
+        self.assertEqual(strict_rstrip("can't strip", "can't strip because the string's too long"), "can't strip")
+
+    def test_capital1(self):
+        self.assertEqual(strict_rstrip("Can You Capitalize rRight?", "Right?"), "Can You Capitalize r")
+
+    def test_capital2(self):
+        self.assertEqual(strict_rstrip("I SHOUT LOUD", " LOUD"), "I SHOUT")
 
 if __name__ == "__main__":
     unittest.main()
