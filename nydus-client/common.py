@@ -53,7 +53,7 @@ def get_home_dir():
     else:
         # Plan B; assume standard structure and get username
         username = get_username()
-        home_dir = "/home/{}".format(username)
+        home_dir = os.path.join("/home", username)
 
     # We have our prospective home directory
     
@@ -75,7 +75,7 @@ def get_minecraft_path():
     
     home_dir = get_home_dir()
 
-    minecraft_path = "{}/.minecraft".format(home_dir)
+    minecraft_path = os.path.join(home_dir, ".minecraft")
 
     if not os.path.isdir(minecraft_path):
         raise OSError("User's Minecraft directory does not exist at {}".format(minecraft_path))
