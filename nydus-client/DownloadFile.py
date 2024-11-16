@@ -2,6 +2,37 @@
 
 import common
 import os
+import requests
+
+"""
+Class theory
+
+This class will include all the info needed to actually download a file used in Minecraft
+This includes
+  * The position on the filesystem where it should go
+  * The expected sha1 hash of the file
+  * The url at which the file will be found
+
+The class will also have the utilities needed to download the file.
+When file download is requested, we need to
+    1) Check if the file already exists
+    2) If it exists, check if it has the right sha1 hash. If so, we're done -> Success
+    3) If it has the wrong hash or doesn't exist, check if the path to the file's location exists
+    4) If the path doesn't exist, make it
+    5) Download the file from the interwebs and place it in the right spot.
+    6) Check the newly downloaded file has the right hash. If so, we're done -> Success
+
+Possible (unrecoverable) error cases:
+    * existing file is missing/wrong hash and
+        - path to file's location can't be created
+        - url doesn't exist
+        - connection gets interrupted
+        - location to write the file is unwritable
+        - file downloads fine but has the wrong hash
+
+Is there any reason to delay downloading the file?
+Should the class download the file as soon as it is instantiated?
+"""
 
 MC_MODE=0o775
 
@@ -11,6 +42,9 @@ class DownloadFile:
     # path, if given, must be absolute
     # path need not exist
     # path INCLUDES the final filename
+    """
+    name: a string representing the file
+    """
     def __init__(self, name, url, sha1, path=""):
         self.name = name
 
@@ -40,21 +74,4 @@ class DownloadFile:
 
         self.path = "{}/{}".format(mcpath, upath)
 
-    # Create the needed directories to store the file in
-    # But only if they don't exist
-    def create_path(self):
-        # self.path includes final filename; we need
-        # the path without the file to create intermediate directories
-        
-        # TODO
-        # does makedirs have some return code or exception raise
-        # that should be handled here?
-        # it can raise FileExistsError, but we check that
-        # before running it anyway
-        dirpath = os.path.dirname(self.path)
-        if not os.path.isdir(dirpath):
-            # Make sure to create the new directories with the right
-            # permissions, but set the umask back when we're done
-            old_umask = os.umask(MC_MODE)
-            os.makedirs(dirpath, MC_MODE)
-            os.umask(old_umask)
+    
