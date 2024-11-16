@@ -34,7 +34,10 @@ Is there any reason to delay downloading the file?
 Should the class download the file as soon as it is instantiated?
 """
 
-MC_MODE=0o775
+MC_MODE = 0o775
+
+# Downloaded files usually appear inside this directory under .minecraft
+MC_DOWNLOAD_DIR = "libraries"
 
 class DownloadFile:
 
@@ -50,32 +53,71 @@ class DownloadFile:
     """
     def __init__(self, url, sha1, name="", path=""):
 
-        self.url = url
 
         assert common.is_download_url(url), "url provided to DownloadFile is not a valid file downloading url: {}".format(url)
+        self.url = url
 
-        # TODO validate sha1 is a real hash
+        assert common.is_sha1(sha1), "file hash provided to DownloadFile does not look like a sha1 digest: {}".format(sha1)
         self.sha1 = sha1
 
-        # TODO validate the user-provided path is good
-        if path != "":
+        if self.is_download_filepath(path):
             self.path = path
         else:
             self.infer_path()
 
-        # TODO validate the user-provided name is good
-        if name != "":
+        if self.is_download_filename(name):
             self.name = name
         else:
             self.infer_name()
 
     """
+    To be a valid path for a download file to be saved under, it has to be nonempty,
+    absolute, and start with the user's .minecraft folder.
+    Returns True if the given path is a valid one for a download file.
+    """
+    def is_download_filepath(self, filepath):
+
+        if filepath == "":
+            return False
+
+        mc_path = common.get_minecraft_path()
+
+        if os.path.isabs() and filepath.startswith(mc_path):
+            return True
+        return False
+
+    """
+    To be a valid filename to save a download file under, it must be nonempty,
+    and not contain a / since those are part of paths.
+    Returns True if the given name is valid for a download file.
+    """
+    def is_download_filename(self, filename):
+
+        if filename == "":
+            return False
+
+        idx = filename.find("/")
+        if idx == -1:
+            return True
+        return False
+
+    """
     Only if the path at which the file should be stored is unknown, infer it
-    using the path section of the download URL
+    using the path section of the download URL.
+    The infered path is
+    {user's minecraft path}/{MC_DOWNLOAD_DIR}/{path section of url}
+    MC_DOWNLOAD_DIR is used because most downloaded files appear under somewhere inside
+    the minecraft directory, but this position is not included in the url's path
     """
     def infer_path(self):
         url_path = common.get_url_path(self.url)
-        self.path = os.path.dirname(url_path)
+        url_path = os.path.dirname(url_path)
+
+        mc_path = common.get_minecraft_path()
+
+        final_path = os.path.join(mc_path, MC_DOWNLOAD_DIR, url_path)
+
+        self.path = final_path
     
     """
     Only if the name of the file is unknown, infer it using the path section

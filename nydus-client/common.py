@@ -55,17 +55,25 @@ def get_home_dir():
 
     pwdentry = get_pwd_entry()
 
+    expanded_homedir = os.path.expanduser("~")
+
     if hasattr(pwdentry, "pw_dir"):
         home_dir = pwdentry.pw_dir
 
+    # os.path.expanduser returns the original string if expansion
+    # failed
+    elif expanded_homedir != "~":
+        # Plan B; use os.path's user home directory expansion
+        home_dir = expanded_homedir
+
     else:
-        # Plan B; assume standard structure and get username
+        # Plan C; assume standard structure and get username
         username = get_username()
         home_dir = os.path.join("/home", username)
 
     # We have our prospective home directory
     
-    if not isinstance(home_dir, type("")):
+    if not isinstance(home_dir, str):
         raise OSError("User's home directory is not a string.")
 
     if home_dir == "":
