@@ -3,6 +3,8 @@
 import common
 import os
 import requests
+import hashlib
+import hmac
 
 """
 Class theory
@@ -70,6 +72,28 @@ class DownloadFile:
         else:
             self.infer_name()
 
+        self.fullpath = os.path.join(self.path, self.name)
+
+    def get_url(self):
+        return self.url
+
+    def get_sha1(self):
+        return self.sha1
+
+    def get_path(self):
+        return self.path
+    
+    def get_name(self):
+        return self.name
+
+    """
+    Here a 'fullpath' is the path to the file plus the filename
+    where 'path' just means the hierarchy of directories containing the file
+    without including the filename
+    """
+    def get_fullpath(self):
+        return self.fullpath
+
     """
     To be a valid path for a download file to be saved under, it has to be nonempty,
     absolute, and start with the user's .minecraft folder.
@@ -110,7 +134,7 @@ class DownloadFile:
     the minecraft directory, but this position is not included in the url's path
     """
     def infer_path(self):
-        url_path = common.get_url_path(self.url)
+        url_path = common.get_url_path(self.get_url())
         url_path = os.path.dirname(url_path)
 
         mc_path = common.get_minecraft_path()
@@ -124,5 +148,33 @@ class DownloadFile:
     of the download URL
     """
     def infer_name(self):
-        url_path = common.get_url_path(self.url)
+        url_path = common.get_url_path(self.get_url())
         self.name = os.path.basename(url_path)
+
+    """
+    Verify that the sha1 hash of the file self.name under self.path
+    is the same as self.sha1
+    Returns True if so, False if not
+    """
+    def verify_file_hash(self):
+        with open(self.get_fullpath(), "rb") as f:
+            digest = hashlib.file_digest(f, "sha1")
+
+        hexhash = digest.hexdigest()
+
+        # compare_digest requires the same type from both objects, but
+        # .hexdigest() returns a string, so we have that
+        return hmac.compare_digest(self.get_sha1(), hexhash)
+
+    """
+    Master download function
+    When this is completes, the file has either been downloaded into the
+    indicated location, or an error has been raised
+    1 - Check for file existence (and hash correctness if existing)
+    2 - Check for path existence and create if missing
+    3 - Download file into the right spot
+    4 - Check newly downloaded file has correct hash
+    """
+    def download(self):
+
+
