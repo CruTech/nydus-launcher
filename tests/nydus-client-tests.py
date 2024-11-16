@@ -132,5 +132,57 @@ class TestStrictRstrip(unittest.TestCase):
     def test_capital2(self):
         self.assertEqual(strict_rstrip("I SHOUT LOUD", " LOUD"), "I SHOUT")
 
+class TestIsSha1(unittest.TestCase):
+
+    def test_sample1(self):
+        self.assertTrue(is_sha1("b1d8ab82d11d92fd639b56d639f8f46f739dd5fa"))
+        
+    def test_sample2(self):
+        self.assertTrue(is_sha1("659feffdd12280201c8aacb8f7be94f9a883c824"))
+
+    def test_sample3(self):
+        self.assertTrue(is_sha1("ba1f3fed0ee4be0217eaa41c5bbfb4b9b1383c33"))
+
+    def test_sample4(self):
+        self.assertTrue(is_sha1("2351fc2fc174c27300e404ab038b88a54cc32455"))
+
+    def test_sample5(self):
+        self.assertTrue(is_sha1("da2bc4e9f46906f7199a8ac661e08d64c6bc28f4"))
+
+    def test_fail1(self):
+        self.assertFalse(is_sha1("b1d8ab82d11d92fd639b56d639f8f46f739dd5fa4"))
+        
+    def test_fail2(self):
+        self.assertFalse(is_sha1("659f-ffdd122+0201c8aacb8f7be94f9a883c824"))
+
+    def test_fail3(self):
+        self.assertFalse(is_sha1("ba1f3fed!ee4be0217eaa41c5bbf  b9b1383c33"))
+
+    def test_fail4(self):
+        self.assertFalse(is_sha1("351fc2fc174c27300e404ab038b88a54cc32455"))
+
+    def test_fail5(self):
+        self.assertFalse(is_sha1(""))
+
+    def test_type1(self):
+        with self.assertRaises(AssertionError):
+            is_sha1(8)
+
+    def test_type2(self):
+        with self.assertRaises(AssertionError):
+            is_sha1(4725343924690617190089866170866456432824)
+
+    def test_type3(self):
+        with self.assertRaises(AssertionError):
+            is_sha1(True)
+
+    def test_type4(self):
+        with self.assertRaises(AssertionError):
+            is_sha1(["ba1f", "3fed0ee4be0", "217eaa41c5bbf", "b4b9b1383c33"])
+
+    def test_type5(self):
+        with self.assertRaises(AssertionError):
+            is_sha1(6591234561228020168789081723944958.836824)
+
 if __name__ == "__main__":
     unittest.main()

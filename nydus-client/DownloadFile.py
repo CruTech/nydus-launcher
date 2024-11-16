@@ -34,6 +34,9 @@ Possible (unrecoverable) error cases:
 
 Is there any reason to delay downloading the file?
 Should the class download the file as soon as it is instantiated?
+
+TODO everything other than the download, create_path, and verify_file_hash
+functions are easy to write unit tests for and should be tested
 """
 
 MC_MODE = 0o775
