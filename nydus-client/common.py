@@ -1,12 +1,16 @@
 #!/usr/bin/python3
 
-# Utilities needed in multiple Nydus client modules
+"""
+Utilities needed in multiple Nydus client modules
+"""
 
 import os
 import pwd
 import re
 
-# Raises OSError if something's wrong with pwd database entry
+"""
+Raises OSError if something's wrong with pwd database entry
+"""
 def get_pwd_entry(uid=None):
 
     if not uid:
@@ -24,7 +28,9 @@ def get_pwd_entry(uid=None):
     return pwdentry
 
 
-# Raises OSError if username can't be found for some reason
+"""
+Raises OSError if username can't be found for some reason
+"""
 def get_username():
 
     pwdentry = get_pwd_entry()
@@ -42,7 +48,9 @@ def get_username():
 
     return username
 
-# Raises OSError if home directory can't be found for some reason
+"""
+Raises OSError if home directory can't be found for some reason
+"""
 def get_home_dir():
 
     pwdentry = get_pwd_entry()
@@ -69,8 +77,10 @@ def get_home_dir():
     return home_dir
 
 
-# Gets path to current user's .minecraft folder (including '.minecraft' in the path)
-# Raises OSError if it can't be found.
+"""
+Gets path to current user's .minecraft folder (including '.minecraft' in the path)
+Raises OSError if it can't be found.
+"""
 def get_minecraft_path():
     
     home_dir = get_home_dir()
@@ -81,15 +91,17 @@ def get_minecraft_path():
         raise OSError("User's Minecraft directory does not exist at {}".format(minecraft_path))
     return minecraft_path
 
-# Python's default lstrip, given a to_strip string of more than one character,
-# will strip everything off the original string until it finds a character
-# which does not appear in the to_strip string at all.
-# i.e. 'https://thog.com'.lstrip('https://') will return 'og.com', not 'thog.com'
-# becuase the 't' and 'h' in 'thog' are also characters in 'https://'.
-# This function strips only the exact to_strip string provided, and doesn't
-# change the original string if it doesn't start with to_strip.
-# So strict_lstrip('https://thog.com', 'https://') will return 'thog.com'
-# and strict_lstrip('https:google', 'ht') will return 'tps:google'
+"""
+Python's default lstrip, given a to_strip string of more than one character,
+will strip everything off the original string until it finds a character
+which does not appear in the to_strip string at all.
+i.e. 'https://thog.com'.lstrip('https://') will return 'og.com', not 'thog.com'
+becuase the 't' and 'h' in 'thog' are also characters in 'https://'.
+This function strips only the exact to_strip string provided, and doesn't
+change the original string if it doesn't start with to_strip.
+So strict_lstrip('https://thog.com', 'https://') will return 'thog.com'
+and strict_lstrip('https:google', 'ht') will return 'tps:google'
+"""
 def strict_lstrip(orig, to_strip):
     assert isinstance(orig, str), "non-string provided as orig to strict_lstrip: {}".format(orig)
     assert isinstance(to_strip, str), "non-string provided as to_strip to strict_lstrip: {}".format(to_strip)
@@ -100,7 +112,9 @@ def strict_lstrip(orig, to_strip):
     new = orig[len(to_strip):]
     return new
 
-# strict_rstrip is to rstrip as strict_lstrip is to lstrip
+"""
+strict_rstrip is to rstrip as strict_lstrip is to lstrip
+"""
 def strict_rstrip(orig, to_strip):
     assert isinstance(orig, str), "non-string provided as orig to strict_rstrip: {}".format(orig)
     assert isinstance(to_strip, str), "non-string provided as to_strip to strict_rstrip: {}".format(to_strip)
@@ -111,9 +125,11 @@ def strict_rstrip(orig, to_strip):
     new = orig[:len(orig) - len(to_strip)]
     return new
 
-# We expect url is https, and ends in a file path, since that seems to be the case
-# for all urls indicating files to download
-# TODO Should we do this with a regex?
+"""
+We expect url is https, and ends in a file path, since that seems to be the case
+for all urls indicating files to download
+TODO Should we do this with a regex?
+"""
 def is_download_url(url):
 
     assert isinstance(url, str), "non-string provided as url to is_download_url: {}".format(url)
@@ -142,7 +158,9 @@ def is_download_url(url):
     
     return True
 
-# If the url conforms to is_download_url, returns the domain
+"""
+If the url conforms to is_download_url, returns the domain
+"""
 def get_url_domain(url):
     assert is_download_url(url), "url provided to get_url_domain is not a download url: {}".format(url)
     protocol = "https://"
@@ -157,7 +175,9 @@ def get_url_domain(url):
     path = without_protocol[slash_idx + 1:]
     return domain
 
-# If the url conforms to is_download_url, returns the path
+"""
+If the url conforms to is_download_url, returns the path
+"""
 def get_url_path(url):
     assert is_download_url(url), "url provided to get_url_path is not a download url: {}".format(url)
     protocol = "https://"
@@ -170,6 +190,20 @@ def get_url_path(url):
 
     path = without_protocol[slash_idx + 1:]
     return path
+
+"""
+sha1 hash digests appearing in the Minecraft json files
+are presented as 40 hexadecimal digits
+digest: a string
+Returns True if the digest is the right form for a sha1 hash
+False otherwise
+"""
+def is_sha1(digest):
+    assert isinstance(digest, str), "sha1 digest given was not a string: {}".format(digest)
+
+    if re.fullmatch(r"[0-9a-f]{40}", digest):
+        return True
+    return False
 
 if __name__ == "__main__":
     print(get_minecraft_path())

@@ -74,11 +74,13 @@ class DownloadFile:
     using the path section of the download URL
     """
     def infer_path(self):
-        pass
+        url_path = common.get_url_path(self.url)
+        self.path = os.path.dirname(url_path)
     
     """
     Only if the name of the file is unknown, infer it using the path section
     of the download URL
     """
     def infer_name(self):
-        pass
+        url_path = common.get_url_path(self.url)
+        self.name = os.path.basename(url_path)
