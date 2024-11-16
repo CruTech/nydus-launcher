@@ -38,15 +38,17 @@ MC_MODE=0o775
 
 class DownloadFile:
 
-    # url must be correct according to common.is_download_url
-    # path, if given, must be absolute
-    # path need not exist
-    # path INCLUDES the final filename
     """
-    name: a string representing the file
+    url: string, conforming to common.is_download_url
+    sha1: string, a sha1 hash of the file against which the file will be
+        validated
+    name: string, the filename which will be downloaded
+    path: string, the path to where the file will be placed (not including
+        the filename itself). Path need not exist but must be absolute.
+    If path and name are not provided, they will be inferred from the path
+        part of the url (by prepending the user's home and minecraft directories)
     """
-    def __init__(self, name, url, sha1, path=""):
-        self.name = name
+    def __init__(self, url, sha1, name="", path=""):
 
         self.url = url
 
@@ -55,23 +57,28 @@ class DownloadFile:
         # TODO validate sha1 is a real hash
         self.sha1 = sha1
 
-        self.path = path
+        # TODO validate the user-provided path is good
+        if path != "":
+            self.path = path
+        else:
+            self.infer_path()
 
-        if self.path == "":
-            self.construct_path()
+        # TODO validate the user-provided name is good
+        if name != "":
+            self.name = name
+        else:
+            self.infer_name()
 
-    # Only if the path at which the file should be stored is unknown,
-    # infer it using filename and download URL
-    def construct_path(self):
-        if self.path != "":
-            return
-        
-        upath = common.get_url_path(self.url)
-        mcpath = common.get_minecraft_path()
-
-        if upath.startswith("/"):
-            upath = upath.lstrip("/")
-
-        self.path = "{}/{}".format(mcpath, upath)
-
+    """
+    Only if the path at which the file should be stored is unknown, infer it
+    using the path section of the download URL
+    """
+    def infer_path(self):
+        pass
     
+    """
+    Only if the name of the file is unknown, infer it using the path section
+    of the download URL
+    """
+    def infer_name(self):
+        pass

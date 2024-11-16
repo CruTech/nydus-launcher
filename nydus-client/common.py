@@ -113,6 +113,7 @@ def strict_rstrip(orig, to_strip):
 
 # We expect url is https, and ends in a file path, since that seems to be the case
 # for all urls indicating files to download
+# TODO Should we do this with a regex?
 def is_download_url(url):
 
     assert isinstance(url, str), "non-string provided as url to is_download_url: {}".format(url)
