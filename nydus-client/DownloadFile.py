@@ -165,11 +165,29 @@ class DownloadFile:
         # compare_digest requires the same type from both objects, but
         # .hexdigest() returns a string, so we have that
         return hmac.compare_digest(self.get_sha1(), hexhash)
+    
+    """
+    Creates the path under which the downloaded file will be stored
+    Returns nothing; failure raises errors
+    """
+    def create_path(self):
+        mc_path = common.get_minecraft_path()
+        assert os.path.isdir(mc_path), "User's Minecraft directory does not exist: {}".format(mc_path)
+
+        if os.path.isdir(self.get_path()):
+            return
+
+        # makedirs creates intermediate directories according to the umask
+        # so we have to set the mode we want on the intermediate directories
+        # then restore the original setting after
+        old_umask = os.umask(MC_MODE)
+        os.makedirs(self.get_path(), MC_MODE)
+        os.umask(old_umask)
 
     """
     Master download function
-    When this is completes, the file has either been downloaded into the
-    indicated location, or an error has been raised
+    Returns nothin; when this is completes, the file has either been
+    downloaded into the indicated location, or an error has been raised.
     1 - Check for file existence (and hash correctness if existing)
     2 - Check for path existence and create if missing
     3 - Download file into the right spot
@@ -177,4 +195,20 @@ class DownloadFile:
     """
     def download(self):
 
+        if os.path.isfile(self.get_fullpath()):
+            if self.verify_file_hash():
+                return
 
+        if not os.path.isdir(self.get_path()):
+            self.create_path()
+
+        # Need to do error handling here
+        response = requests.get(self.get_url(), stream=True)
+
+        with open(self.get_fullpath(), "wb") as f:
+            for data in response.iter_content():
+                f.write(data)
+
+        if not self.verify_file_hash():
+            raise ValueError("File downloaded from {} to {} failed sha1 hash verification."\
+                    .format(self.get_url(), self.get_fullpath()))
