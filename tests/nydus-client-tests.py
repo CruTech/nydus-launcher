@@ -132,6 +132,209 @@ class TestStrictRstrip(unittest.TestCase):
     def test_capital2(self):
         self.assertEqual(strict_rstrip("I SHOUT LOUD", " LOUD"), "I SHOUT")
 
+class TestDownloadUrl(unittest.TestCase):
+
+    def test_type1(self):
+        with self.assertRaises(AssertionError):
+            is_download_url(01.2203)
+
+    def test_type2(self):
+        with self.assertRaises(AssertionError):
+            is_download_url(778)
+
+    def test_type3(self):
+        with self.assertRaises(AssertionError):
+            is_download_url(True)
+
+    def test_type4(self):
+        with self.assertRaises(AssertionError):
+            is_download_url(["https://", "dobby.com.au", "/lib/com/search.txt"])
+
+    def test_abspath(self):
+        self.assertFalse(is_download_url("/home/crutech/.minecraft"))
+
+    def test_relpath(self):
+        self.assertFalse(is_download_url("nydus-launcher/nydus-client/common.py"))
+
+    def test_fileurl(self):
+        self.assertFalse(is_download_url("file:///Users/crutech/Documents/slides.tex"))
+
+    def test_right1(self):
+        self.assertTrue(is_download_url("https://piston-meta.mojang.com/v1/packages/a3165080e2b0/rd.json"))
+
+    def test_right2(self):
+        self.assertTrue(is_download_url("https://libraries.minecraft.net/org/slf4j/slf4j-api/2.0.9/slf4j-api-2.0.9.jar"))
+
+    def test_right3(self):
+        self.assertTrue(is_download_url("https://libraries.minecraft.net/commons-io/commons-io/2.15.1/commons-io-2.15.1.jar"))
+
+    def test_right4(self):
+        self.assertTrue(is_download_url("https://libraries.minecraft.net/org/slf4j/slf4j-api/2.0.9/slf4j-api-2.0.9"))
+
+    def test_off1(self):
+        self.assertFalse(is_download_url("http://piston-meta.mojang.com/v1/packages/a3165080e2b0/rd.json"))
+
+    def test_off2(self):
+        self.assertFalse(is_download_url("https:piston-meta.mojang.com/v1/packages/a3165080e2b0/rd.json"))
+
+    def test_off3(self):
+        self.assertFalse(is_download_url("https://piston-meta.mojang.com"))
+
+    def test_off4(self):
+        self.assertFalse(is_download_url("https://piston-meta.mojang.com/"))
+
+    def test_off5(self):
+        self.assertFalse(is_download_url("https:/piston-meta.mojang.com/v1/packages/a3165080e2b0/rd.json"))
+
+    def test_off6(self):
+        self.assertFalse(is_download_url("https://piston-meta.mojang.com.v1.packages.a3165080e2b0.rd.json"))
+
+    def test_off7(self):
+        self.assertFalse(is_download_url("https:///v1/packages/a3165080e2b0/rd.json"))
+
+class TestGetUrlDomain(unittest.TestCase):
+    def test_type1(self):
+        with self.assertRaises(AssertionError):
+            get_url_domain(01.2203)
+
+    def test_type2(self):
+        with self.assertRaises(AssertionError):
+            get_url_domain(778)
+
+    def test_type3(self):
+        with self.assertRaises(AssertionError):
+            get_url_domain(True)
+
+    def test_type4(self):
+        with self.assertRaises(AssertionError):
+            get_url_domain(["https://", "dobby.com.au", "/lib/com/search.txt"])
+
+    def test_right1(self):
+        self.assertEqual(get_url_domain("https://piston-meta.mojang.com/v1/packages/a3165080e2b0/rd.json"), "piston-meta.mojang.com")
+
+    def test_right2(self):
+        self.assertEqual(get_url_domain("https://libraries.minecraft.net/org/slf4j/slf4j-api/2.0.9/slf4j-api-2.0.9.jar"), "libraries.minecraft.net")
+
+    def test_right3(self):
+        self.assertEqual(get_url_domain("https://paper.io/commons-io/commons-io/2.15.1/commons-io-2.15.1.jar"), "paper.io")
+
+    def test_right4(self):
+        self.assertEqual(get_url_domain("https://cse.edu.au/org/slf4j/slf4j-api/2.0.9/slf4j-api-2.0.9"), "cse.edu.au")
+
+    def test_abspath(self):
+        with self.assertRaises(AssertionError):
+            get_url_domain("/home/crutech/.minecraft")
+
+    def test_relpath(self):
+        with self.assertRaises(AssertionError):
+            get_url_domain("nydus-launcher/nydus-client/common.py")
+
+    def test_fileurl(self):
+        with self.assertRaises(AssertionError):
+            get_url_domain("file:///Users/crutech/Documents/slides.tex")
+
+    def test_off1(self):
+        with self.assertRaises(AssertionError):
+            get_url_domain("http://piston-meta.mojang.com/v1/packages/a3165080e2b0/rd.json")
+
+    def test_off2(self):
+        with self.assertRaises(AssertionError):
+            get_url_domain("https:piston-meta.mojang.com/v1/packages/a3165080e2b0/rd.json")
+
+    def test_off3(self):
+        with self.assertRaises(AssertionError):
+            get_url_domain("https://piston-meta.mojang.com")
+
+    def test_off4(self):
+        with self.assertRaises(AssertionError):
+            get_url_domain("https://piston-meta.mojang.com/")
+
+    def test_off5(self):
+        with self.assertRaises(AssertionError):
+            get_url_domain("https:/piston-meta.mojang.com/v1/packages/a3165080e2b0/rd.json")
+
+    def test_off6(self):
+        with self.assertRaises(AssertionError):
+            get_url_domain("https://piston-meta.mojang.com.v1.packages.a3165080e2b0.rd.json")
+
+    def test_off7(self):
+        with self.assertRaises(AssertionError):
+            get_url_domain("https:///v1/packages/a3165080e2b0/rd.json")
+
+
+class TestGetUrlPath(unittest.TestCase):
+    def test_type1(self):
+        with self.assertRaises(AssertionError):
+            get_url_path(01.2203)
+
+    def test_type2(self):
+        with self.assertRaises(AssertionError):
+            get_url_path(778)
+
+    def test_type3(self):
+        with self.assertRaises(AssertionError):
+            get_url_path(True)
+
+    def test_type4(self):
+        with self.assertRaises(AssertionError):
+            get_url_path(["https://", "dobby.com.au", "/lib/com/search.txt"])
+
+    def test_right1(self):
+        self.assertEqual(get_url_path("https://piston-meta.mojang.com/v1/packages/a3165080e2b0/rd.json"),
+            "v1/packages/a3165080e2b0/rd.json")
+
+    def test_right2(self):
+        self.assertEqual(get_url_path("https://libraries.minecraft.net/org/slf4j/slf4j-api/2.0.9/slf4j-api-2.0.9.jar"),
+            "org/slf4j/slf4j-api/2.0.9/slf4j-api-2.0.9.jar")
+
+    def test_right3(self):
+        self.assertEqual(get_url_path("https://libraries.minecraft.net/commons-io/commons-io/2.15.1/commons-io-2.15.1.jar"),
+            "commons-io/commons-io/2.15.1/commons-io-2.15.1.jar")
+
+    def test_right4(self):
+        self.assertEqual(get_url_path("https://libraries.minecraft.net/org/slf4j/slf4j-api/2.0.9/slf4j-api-2.0.9"),
+            "org/slf4j/slf4j-api/2.0.9/slf4j-api-2.0.9")
+
+    def test_abspath(self):
+        with self.assertRaises(AssertionError):
+            get_url_domain("/home/crutech/.minecraft")
+
+    def test_relpath(self):
+        with self.assertRaises(AssertionError):
+            get_url_domain("nydus-launcher/nydus-client/common.py")
+
+    def test_fileurl(self):
+        with self.assertRaises(AssertionError):
+            get_url_domain("file:///Users/crutech/Documents/slides.tex")
+
+    def test_off1(self):
+        with self.assertRaises(AssertionError):
+            get_url_domain("http://piston-meta.mojang.com/v1/packages/a3165080e2b0/rd.json")
+
+    def test_off2(self):
+        with self.assertRaises(AssertionError):
+            get_url_domain("https:piston-meta.mojang.com/v1/packages/a3165080e2b0/rd.json")
+
+    def test_off3(self):
+        with self.assertRaises(AssertionError):
+            get_url_domain("https://piston-meta.mojang.com")
+
+    def test_off4(self):
+        with self.assertRaises(AssertionError):
+            get_url_domain("https://piston-meta.mojang.com/")
+
+    def test_off5(self):
+        with self.assertRaises(AssertionError):
+            get_url_domain("https:/piston-meta.mojang.com/v1/packages/a3165080e2b0/rd.json")
+
+    def test_off6(self):
+        with self.assertRaises(AssertionError):
+            get_url_domain("https://piston-meta.mojang.com.v1.packages.a3165080e2b0.rd.json")
+
+    def test_off7(self):
+        with self.assertRaises(AssertionError):
+            get_url_domain("https:///v1/packages/a3165080e2b0/rd.json")
+
 class TestIsSha1(unittest.TestCase):
 
     def test_sample1(self):
