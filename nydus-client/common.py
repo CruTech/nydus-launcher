@@ -177,7 +177,7 @@ def get_url_domain(url):
     slash_idx = without_protocol.find("/")
     if slash_idx < 0:
         # No file path
-        return False
+        raise ValueError("url {} did not have a file path despite passing the check for being a download url")
 
     domain = without_protocol[:slash_idx]
     path = without_protocol[slash_idx + 1:]
@@ -194,7 +194,7 @@ def get_url_path(url):
     slash_idx = without_protocol.find("/")
     if slash_idx < 0:
         # No file path
-        return False
+        raise ValueError("url {} did not have a file path despite passing the check for being a download url")
 
     path = without_protocol[slash_idx + 1:]
     return path
