@@ -37,6 +37,9 @@ VERSIONS_BLOCK = "version"
 VERSION_ID = "id"
 SHA1_HASH = "sha1"
 DOWNLOAD_URL = "url"
+LIBRARY_KEY = "libraries"
+SUBPATH = "path"
+
 
 # TODO
 # Update so it actually dynamically gets version from somewhere authoritative
@@ -101,7 +104,7 @@ def get_version_manifest_data(version):
     # TODO check file exists
     with open(get_manifest_path(), "r") as f:
 
-        # Todo check json data valid
+        # TODO check json data valid
         jdata = json.load(f)
 
     # check json has the right entries
@@ -124,12 +127,65 @@ def download_version_json(version):
         raise ValueError("version was not valid: {}".format(version))
 
     version_data = get_version_manifest_data(version)
-    fpath = get_version_json_path()
+    fpath = get_version_json_path(version)
     fname = os.path.basename(fpath)
     dirpath = os.path.dirname(fpath)
 
     sha1 = version_data[SHA1_HASH]
     url = version_data[DOWNLOAD_URL]
 
-    vj_download = DownloadFile(url, sha1, fname, dirpath)
+    vj_download = DownloadFile(url, sha1, name=fname, path=dirpath)
     vj_download.download()
+
+"""
+Goes through all the libraries files in the requested version's
+json file and downloads them all
+"""
+def download_libraries(version):
+    if not is_valid_version(version):
+        raise ValueError("version was not valid: {}".format(version))
+
+    vj_path = get_version_json_path(version)
+    with open(vj_path, "r") as f:
+        # TODO check json data valid
+        jdata = json.load(f)
+
+    # check json has the right entries
+    libraries = jdata[LIBRARY_KEY]
+
+    # split into more functions
+    for obj_dict in libraries:
+
+
+        # If there are rules applying to this object,
+        # only download if it is for linux
+        # But if there are no rules, download it anyway
+
+        do_download = False
+        if RULES_KEY in obj_dict:
+            rule_data = obj_dict["rules"]
+
+            for rule in rules_data:
+                if rule["action"] == "allow":
+                    if rule["os"]["name"] == "linux":
+                        do_download = True
+        else:
+            do_download = True
+
+        if do_download:
+            download_data = obj_dict["downloads"]["artifact"]
+            url = download_data[DOWNLOAD_URL]
+            sha1 = download_data[SHA1_HASH]
+            path = download_data[SUBPATH]
+            
+            # The path for these artifacts doesn't include the dir
+            # 'libraries' that they are all under
+            mc_path = common.get_minecraft_path()
+            full_path = os.path.join(mc_path, "libraries", path)
+            fname = os.path.basename(full_path)
+            dirpath = os.path.basename(fullpath)
+
+            lib_download = DownloadFile(url, sha1, name=fname, path=dirpath)
+            lib_download.download()
+        
+    
