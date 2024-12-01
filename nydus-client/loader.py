@@ -3,6 +3,7 @@
 import common
 import os
 import json
+from json.decoder import JSONDecodeError
 from DownloadFile import DownloadFile
 
 # Use the json files under .minecraft to find all the jar files we'll need
@@ -47,17 +48,100 @@ SUBPATH = "path"
 def get_minecraft_version():
     return "1.20.6"
 
+"""
+Given path to a file, reads the file and returns 
+json data accessible via list/dictionary style interface,
+as produced by json.load
+"""
+def read_json_file(filepath):
+    assert isinstance(filepath, str), "Filepath should have been a string. Was {}".format(filepath)
+
+    assert os.path.isfile(filepath), "Filepath did not exist: {}".format(filepath)
+
+    with open(filepath, "r") as f:
+
+        try:
+            data = json.load(f)
+        except JsonDecodeError as e:
+            raise ValueError("Failed to parse json in {} at line {} col {} char {}"\
+                    .format(filepath, e.lineno, e.colno, e.pos))
+    return data
+
+"""
+Given a json data object (using the list/dictionary style
+interface returned by json.load) returns the data at
+a specified position.
+jstruct: the json data object. This needs to be a dictionary, not a list
+key: if this key exists at the top level of the json data, return
+    the data under the key.
+raise: if the key is not found and the raise parameter is True,
+    raise an exception. If the key is not found and raise is
+    False, return None.
+    'raise' being False does not guarantee no exception will be
+    raised by this function; it may raise an exception if the
+    provided arguments are the wrong data types.
+"""
+def get_json_key(jstruct, key, raise=True):
+
+    assert isinstance(jstruct, dict), "JSON structure given to get_json_key must be a dict. It was a {}"\
+            .format(type(jstruct))
+
+    assert isinstance(key, str), "key given to get_json_key must be a string. It was {}".format(key)
+
+    if key in jstruct:
+        return jstruct[key]
+
+    if raise:
+        raise KeyError("key {} not in given Json structure".format(key))
+
+    return None
+
+"""
+Given a json data object (the list/dictionary representation
+of the kind returned by json.load) looks through a list and
+returns the first element in the list which contains a specified
+key and value pair. Returns only the first such element.
+jlist: the json data object. Needs to be a list.
+keyattr: search through the list until an element which has this key is found
+valattr: if the element has 'valattr' as the value corresponding to key 'keyattr',
+    then it is returned.
+raise: if no element with the right key/value pair is found and 'raise' is True,
+    raise an exception. If it's false, return None.
+    'raise' being False does not guarantee no exception will be
+    raised by this function; it may raise an exception if the
+    provided arguments are the wrong data types.
+"""
+def get_from_json_list(jlist, keyattr, valattr, raise=True):
+    assert isinstance(jlist, list), "JSON structure given to get_from_json_list must be a list. It was a {}"\
+            .format(type(jlist))
+
+    assert isinstance(keyattr, str), "key given to get_from_json_list must be a string. It was {}"\
+            .format(keyattr)
+
+    assert isinstance(valattr, str), "value given to get_from_json_list must be a string. It was {}"\
+            .format(valattr)
+    
+    for elem in jlist:
+        if isinstance(elem, dict):
+            if keyattr in elem:
+                if valattr == elem[keyattr]:
+                    return elem
+
+    if raise:
+        raise AttributeError("No element with key {} and value {} in given JSON structure".\
+                format(keyattr, valattr))
+
+    return None
+
+"""
+Gets all the available Minecraft versions that we know about
+"""
 def get_all_versions():
     mc_path = common.get_minecraft_path()
 
-    # TODO  check file exists
-    with open(get_manifest_path(), "r") as f:
+    jdata = read_json_file(get_manifest_path())
 
-        # TODO check json data valid
-        jdata = json.load(f)
-
-    # check json has the right entries
-    version_json = jdata[VERSIONS_BLOCK]
+    version_json = get_json_key(jdata, VERSIONS_BLOCK)
 
     all_versions = []
     for vers in version_json:
@@ -150,7 +234,7 @@ def download_libraries(version):
         # TODO check json data valid
         jdata = json.load(f)
 
-    # check json has the right entries
+    # TODO check json has the right entries
     libraries = jdata[LIBRARY_KEY]
 
     # split into more functions
