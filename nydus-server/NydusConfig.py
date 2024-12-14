@@ -1,7 +1,7 @@
 
 import os
 
-class NydusConfig():
+class NydusConfig:
 
     """
     path: a string, path to the configuration file to read
