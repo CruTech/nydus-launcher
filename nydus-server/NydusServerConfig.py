@@ -46,6 +46,7 @@ class NydusServerConfig:
 
         self.path = path
         self.read_config_file()
+        self.validate_config()
 
 
     def read_config_file(self):
