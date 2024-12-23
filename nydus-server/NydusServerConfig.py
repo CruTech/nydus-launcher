@@ -8,11 +8,21 @@ CERTPRIVKEY = "CertPrivKey"
 MCVERSION = "McVersion"
 SERVER_PARNAMES = [IPADDR, PORT, CERTFILE, CERTPRIVKEY, MCVERSION]
 SERVER_DEFCONFIG = {
-    IPADDR: "192.168.1.1"
-    PORT: "2011"
-    CERTFILE: "nydus-server.crt"
-    CERTPRIVKEY: "nydus-server.key"
-    MCVERSION: "1.20.6"
+    IPADDR: "192.168.1.1",
+    PORT: "2011",
+    CERTFILE: "nydus-server.crt",
+    CERTPRIVKEY: "nydus-server.key",
+    MCVERSION: "1.20.6",
+}
+
+# Maps between the parameter name used in the config file
+# and the attribute name used in the Config class
+SERVER_VARNAMES = {
+    IPADDR: "ip_addr",
+    PORT: "port",
+    CERTFILE: "cert_file",
+    CERT_PRIVKEY: "cert_privkey",
+    MCVERSION: "mc_version",
 }
 
 class NydusServerConfig:
@@ -29,30 +39,11 @@ class NydusServerConfig:
         if not os.path.isfile(path):
             raise FileNotFoundError("Configuration file could not be found: {}".format(path))
 
-        self.ip_addr = SERVER_DEFCONFIG[IPADDR]
-        self.port = SERVER_DEFCONFIG[PORT]
-        self.cert_file = SERVER_DEFCONFIG[CERTFILE]
-        self.cert_privkey = SERVER_DEFCONFIG[CERTPRIVKEY]
-        self.mc_version = SERVER_DEFCONFIG[MCVERSION]
+        for parname in SERVER_PARNAMES:
+            setattr(self, SERVER_VARNAMES[parname], SERVER_DEFCONFIG[parname])
 
         self.path = path
         self.read_config_file()
-
-    """
-    This function is expected to be given the remainder of a line
-    from a config file, after the parameter name has been removed
-    from the line.
-    It returns the corresponding value if the line is formatted
-    correctly, raises an exception if not.
-    """
-    def read_config_value(self, rest):
-        rest = rest.strip()
-        if rest.startswith("="):
-            value = rest[1:]
-            value = value.strip()
-            return value
-        else:
-            raise ValueError("Could not find value on line {} of configuration file. Rest of line was '{}'".format(nline, rest))
 
 
     def read_config_file(self):
@@ -74,22 +65,21 @@ class NydusServerConfig:
                 
                 # Look for the parameter name
 
-                if line.startswith(IPADDR):
-                    rest = line[len(pname):]
-                    self.ip_addr = self.read_config_value(rest)
-                elif line.startswith(PORT):
-                    rest = line[len(pname):]
-                    self.port = self.read_config_value(rest)
-                elif line.startswith(CERTFILE):
-                    rest = line[len(pname):]
-                    self.cert_file = self.read_config_value(rest)
-                elif line.startswith(CERTPRIVKEY):
-                    rest = line[len(pname):]
-                    self.cert_privkey = self.read_config_value(rest)
-                elif line.startswith(MCVERSION):
-                    rest = line[len(pname):]
-                    self.mc_version = self.read_config_value(rest)
-                else:
+                found_param = False
+                for pname in SERVER_PARNAMES:
+                    if line.startswith(pname):
+                        rest = line[len(pname):]
+                        rest = rest.strip()
+                        if rest.startswith("="):
+                            value = rest[1:]
+                            value = value.strip()
+                            setattr(self, SERVER_VARNAMES[pname], value)
+                            found_param = True
+                            break
+                        else:
+                            raise ValueError("Could not find value on line {} of configuration file. Parameter name {} appeared with no equals sign. Rest of line was '{}'".format(nline, pname, rest))
+
+                if not found_param:
                     raise ValueError("Unknown parameter on line {} of configuration file. Line was '{}'".format(nline, line))
 
                 nline += 1

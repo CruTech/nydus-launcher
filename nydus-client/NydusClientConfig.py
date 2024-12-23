@@ -6,9 +6,17 @@ PORT = "Port"
 CACHAINFILE = "CaChainFile"
 CLIENT_PARNAMES = [SERVERIPADDR, PORT, CACHAINFILE]
 CLIENT_DEFCONFIG = {
-    SERVERIPADDR: "192.168.1.1"
-    PORT: "2011"
-    CACHAINFILE: "nydus-ca.crt"
+    SERVERIPADDR: "192.168.1.1",
+    PORT: "2011",
+    CACHAINFILE: "nydus-ca.crt",
+}
+
+# Maps between the parameter named used in the config file
+# and the attribute name used in the Config class
+CLIENT_VARNAMES = {
+    SERVERIPADDR: "server_ip",
+    PORT: "port",
+    CACHAINFILE: "ca_chain",
 }
 
 class NydusClientConfig:
@@ -22,29 +30,11 @@ class NydusClientConfig:
         if not os.path.isfile(path):
             raise FileNotFoundError("Configuration file could not be found: {}".format(path))
 
-        self.server_ip = CLIENT_DEFCONFIG[SERVERIPADDR]
-        self.port = CLIENT_DEFCONFIG[PORT]
-        self.ca_chain = CLIENT_DEFCONFIG[CACHAINFILE]
+        for parname in CLIENT_PARNAMES:
+            setattr(self, CLIENT_VARNAMES[parname], CLIENT_DEFCONFIG[parname])
 
         self.path = path
         self.read_config_file()
-
-
-    """
-    This function is expected to be given the remainder of a line
-    from a config file, after the parameter name has been removed
-    from the line.
-    It returns the corresponding value if the line is formatted
-    correctly, raises an exception if not.
-    """
-    def read_config_value(self, rest):
-        rest = rest.strip()
-        if rest.startswith("="):
-            value = rest[1:]
-            value = value.strip()
-            return value
-        else:
-            raise ValueError("Could not find value on line {} of configuration file. Rest of line was '{}'".format(nline, rest))
 
     def read_config_file(self):
 
@@ -65,19 +55,16 @@ class NydusClientConfig:
                 
                 # Look for the parameter name
 
-                if line.startswith(SERVERIP):
-                    rest = line[len(SERVERIP
                 found_param = False
                 for pname in CLIENT_PARNAMES:
                     if line.startswith(pname):
-                        found_param = True
-
                         rest = line[len(pname):]
                         rest = rest.strip()
                         if rest.startswith("="):
                             value = rest[1:]
                             value = value.strip()
-                            self.config_params[pname] = value
+                            setattr(self, CLIENT_VARNAMES[pname], value)
+                            found_param = True
                             break
                         else:
                             raise ValueError("Could not find value on line {} of configuration file. Parameter name {} appeared with no equals sign. Rest of line was '{}'".format(nline, pname, rest))
