@@ -1,40 +1,50 @@
 
 import os
 
-class NydusConfig:
+SERVERIPADDR = "ServerIpAddr"
+PORT = "Port"
+CACHAINFILE = "CaChainFile"
+CLIENT_PARNAMES = [SERVERIPADDR, PORT, CACHAINFILE]
+CLIENT_DEFCONFIG = {
+    SERVERIPADDR: "192.168.1.1"
+    PORT: "2011"
+    CACHAINFILE: "nydus-ca.crt"
+}
+
+class NydusClientConfig:
 
     """
     path: a string, path to the configuration file to read
-    config_dict: a dictionary with string keys and values
-        Each key is one configuration parameter.
-        Each value is the default for that parameter.
     """
-    def __init__(self, path, config_dict={}):
+    def __init__(self, path):
         assert isinstance(path, str), "Configuration file path must be a string. Was {}".format(path)
 
         if not os.path.isfile(path):
             raise FileNotFoundError("Configuration file could not be found: {}".format(path))
 
-        self.path = path
-        self.config_params = config_dict
+        self.server_ip = CLIENT_DEFCONFIG[SERVERIPADDR]
+        self.port = CLIENT_DEFCONFIG[PORT]
+        self.ca_chain = CLIENT_DEFCONFIG[CACHAINFILE]
 
-        self.validate_config_defaults()
+        self.path = path
         self.read_config_file()
 
-    def validate_config_defaults(self):
 
-        assert isinstance(self.config_params, dict), \
-                "Parameter collection must be a dictionary. Was {}".format(self.config_params)
-
-        for key in self.config_params:
-            value = self.config_params[key]
-
-            assert isinstance(key, str), \
-                    "Parameter names must be strings. Found a parameter of type {}".format(type(key))
-
-            assert isinstance(value, str), \
-                    "Parameter default values must be strings. Found a parameter of type {}".format(type(value))
-
+    """
+    This function is expected to be given the remainder of a line
+    from a config file, after the parameter name has been removed
+    from the line.
+    It returns the corresponding value if the line is formatted
+    correctly, raises an exception if not.
+    """
+    def read_config_value(self, rest):
+        rest = rest.strip()
+        if rest.startswith("="):
+            value = rest[1:]
+            value = value.strip()
+            return value
+        else:
+            raise ValueError("Could not find value on line {} of configuration file. Rest of line was '{}'".format(nline, rest))
 
     def read_config_file(self):
 
@@ -54,8 +64,11 @@ class NydusConfig:
                     continue
                 
                 # Look for the parameter name
+
+                if line.startswith(SERVERIP):
+                    rest = line[len(SERVERIP
                 found_param = False
-                for pname in self.config_params:
+                for pname in CLIENT_PARNAMES:
                     if line.startswith(pname):
                         found_param = True
 
@@ -74,13 +87,12 @@ class NydusConfig:
 
                 nline += 1
 
-        """
-        pname: string. Name of configuration parameter for which we'd like to get the value.
-        """
-        def get_config_value(self, pname):
-            assert isinstance(pname, str), "Configuration parameter name must be a string. Was given {}".format(pname)
+        
+        def get_server_ip(self):
+            return self.server_ip
 
-            if pname in self.config_params:
-                return self.config_params[pname]
-            
-            raise KeyError("There is no configuration parameter named '{}'".format(pname))
+        def get_port(self):
+            return self.port
+
+        def get_ca_chain(self):
+            return self.ca_chain

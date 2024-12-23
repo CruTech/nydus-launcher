@@ -3,18 +3,9 @@
 import ssl
 import socket
 import common
-from NydusConfig import NydusConfig
+from NydusClientConfig import NydusClientConfig
 
-SERVER_CONFIG_FILE = "/etc/nydus-launcher/client.conf"
-
-SERVERIPADDR = "ServerIpAddr"
-PORT = "Port"
-CACHAINFILE = "CaChainFile"
-SERVER_CONFIG_DICT = {
-    SERVERIPADDR: "192.168.1.1"
-    PORT: "2011"
-    CACHAINFILE: "nydus-ca.crt"
-}
+CLIENT_CONFIG_FILE = "/etc/nydus-launcher/client.conf"
 
 MAXMSG = 1024
 
@@ -93,7 +84,7 @@ def client_main(cfg):
 
 
 def startup():
-    cfg = NydusConfig(SERVER_CONFIG_FILE, SERVER_CONFIG_DICT)
+    cfg = NydusConfig(CLIENT_CONFIG_FILE)
     return cfg
 
 def main():

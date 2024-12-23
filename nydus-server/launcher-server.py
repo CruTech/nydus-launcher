@@ -5,22 +5,9 @@ import ssl
 import random
 import datetime
 import threading
-from NydusConfig import NydusConfig
+from NydusServerConfig import NydusServerConfig
 
 SERVER_CONFIG_FILE = "/etc/nydus-launcher/server.conf"
-
-IPADDR = "IpAddr"
-PORT = "Port"
-CERTFILE = "CertFile"
-CERTPRIVKEY = "CertPrivKey"
-MCVERSION = "McVersion"
-SERVER_CONFIG_DICT = {
-    IPADDR: "192.168.1.1"
-    PORT: "2011"
-    CERTFILE: "nydus-server.crt"
-    CERTPRIVKEY: "nydus-server.key"
-    MCVERSION: "1.20.6"
-}
 
 MAXMSG = 1024
 
@@ -141,7 +128,7 @@ def client_exchange(conn, addr):
     conn.close()
 
 def startup():
-    cfg = NydusConfig(SERVER_CONFIG_FILE, SERVER_CONFIG_DICT)
+    cfg = NydusServerConfig(SERVER_CONFIG_FILE)
     return cfg
 
 def server_main(cfg):
