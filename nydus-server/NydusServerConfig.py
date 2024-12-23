@@ -1,5 +1,6 @@
 
 import os
+import validity
 
 IPADDR = "IpAddr"
 PORT = "Port"
@@ -84,6 +85,22 @@ class NydusServerConfig:
                     raise ValueError("Unknown parameter on line {} of configuration file. Line was '{}'".format(nline, line))
 
                 nline += 1
+
+    def validate_config(self):
+        if not validity.is_valid_ipaddr(self.ip_addr):
+            raise ValueError("Value for {} is not a valid IP address: {}".format(IPADDR, self.ip_addr))
+
+        if not validity.is_valid_port(self.port):
+            raise ValueError("Value for {} is not a valid port: {}".format(PORT, self.port))
+
+        if not validity.is_valid_file(self.cert_file):
+            raise ValueError("Value for {} is not a file, cannot be found, or cannot be read: {}".format(CERTFILE, self.cert_file))
+
+        if not validity.is_valid_file(self.cert_privkey):
+            raise ValueError("Value for {} is not a file, cannot be found, or cannot be read: {}".format(CERTPRIVKEY, self.cert_privkey))
+
+        if not validity.is_valid_minecraft_version(self.mc_version):
+            raise ValueError("Value for {} is not a valid Minecraft version: {}".format(MCVERSION, self.mc_version))
 
     def get_ip_addr(self):
         return self.ip_addr
