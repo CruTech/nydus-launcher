@@ -54,7 +54,7 @@ def allocate_account(conn, addr, sys_username):
     # Allocate a Minecraft account to that username
     # and that IP address
 
-    version = cfg[MCVERSION]
+    version = cfg.get_mc_version()
     mc_account = get_next_account()
     mc_username = mc_account.get_username()
     mc_uuid = mc_account.get_uuid()
@@ -133,10 +133,10 @@ def startup():
 
 def server_main(cfg):
     context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-    context.load_cert_chain(cfg[CERTFILE], cfg[CERTPRIVKEY])
+    context.load_cert_chain(cfg.get_cert_file(), cfg.get_cert_privkey())
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0) as sock:
-        sock.bind((cfg[IPADDR], cfg[PORT]))
+        sock.bind((cfg.get_ip_addr(), cfg.get_port()))
         sock.listen(5)
 
         with context.wrap_socket(sock, server_side=True) as ssock:

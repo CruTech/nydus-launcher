@@ -75,10 +75,10 @@ def client_main(cfg):
     # Manually add the self signed CA to the trusted store
     # Should we allow this to be configured, or require
     # that the cert be in system trusted store?
-    context.load_verify_locations(cafile=cfg[CACERTFILE])
+    context.load_verify_locations(cafile=cfg.get_ca_cert())
 
-    with socket.create_connection((cfg[SERVERIPADDR], cfg[PORT])) as sock:
-        with context.wrap_socket(sock, server_hostname=cfg[SERVERIPADDR]) as ssock:
+    with socket.create_connection((cfg.get_server_ip(), cfg.get_port())) as sock:
+        with context.wrap_socket(sock, server_hostname=cfg.get_server_ip()) as ssock:
            
             request(ssock)
 
