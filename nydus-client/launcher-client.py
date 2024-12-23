@@ -39,6 +39,8 @@ def request(ssock):
     while total_sent < len(request_data):
         total_sent += ssock.send(request_data)
 
+    # Note you can be kept waiting for data forever
+    # by a rogue server. Add some kind of timeout.
     str_data = ""
     received_count = -1
     while len(str_data) < MAXMSG:
@@ -58,6 +60,7 @@ def request(ssock):
 
     ssock.close()
 
+    # Error to handle: some kind of form validity check for each data piece?
     mc_version = parts[0]
     mc_username = parts[1]
     mc_uuid = parts[2]
@@ -75,10 +78,14 @@ def client_main(cfg):
     # Manually add the self signed CA to the trusted store
     # Should we allow this to be configured, or require
     # that the cert be in system trusted store?
+    # Error to handle: if cert doesn't exist
     context.load_verify_locations(cafile=cfg.get_ca_cert())
 
-    with socket.create_connection((cfg.get_server_ip(), cfg.get_port())) as sock:
-        with context.wrap_socket(sock, server_hostname=cfg.get_server_ip()) as ssock:
+    # Error to handle: server ip not reachable
+    # Error to handle: nothing listening on wanted port
+    dest_ip = cfg.get_server_ip()
+    with socket.create_connection((dest_ip, cfg.get_port())) as sock:
+        with context.wrap_socket(sock, server_hostname=dest_ip) as ssock:
            
             request(ssock)
 

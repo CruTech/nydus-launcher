@@ -19,6 +19,8 @@ CLIENT_VARNAMES = {
     CACHAINFILE: "ca_chain",
 }
 
+# TODO check validity of form of each configuration item
+
 class NydusClientConfig:
 
     """

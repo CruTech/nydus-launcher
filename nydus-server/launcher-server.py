@@ -55,6 +55,8 @@ def allocate_account(conn, addr, sys_username):
     # and that IP address
 
     version = cfg.get_mc_version()
+
+    # Error to handle: no account could be obtained
     mc_account = get_next_account()
     mc_username = mc_account.get_username()
     mc_uuid = mc_account.get_uuid()
@@ -65,11 +67,9 @@ def allocate_account(conn, addr, sys_username):
 
     allocation_data = allocation_str.encode(encoding=NETENC)
 
-    print("Server started sending")
     sent_data = 0
     while sent_data < len(allocation_data):
         sent_data += conn.send(allocation_data[sent_data:])
-    print("server finished sending")
 
 def release_account(conn, addr):
     # Release the account on that address
@@ -83,7 +83,6 @@ def handle_connection(conn, addr):
 
 def client_exchange(conn, addr):
 
-    print("Server started receiving")
     received_count = -1
     str_data = ""
 
@@ -106,8 +105,6 @@ def client_exchange(conn, addr):
         now = datetime.datetime.now()
         if now - recv_start > datetime.timedelta(seconds=SRV_TIMEOUT):
             raise TimeoutError("Client took too long to respond")
-
-    print("Server finished receiving")
 
     # The space is intentional; there should be a space between
     # the REQUEST command and the username
@@ -133,8 +130,12 @@ def startup():
 
 def server_main(cfg):
     context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+
+    # Error to handle: what if cert file and cert key can't be found/files don't exist/permission denied?
     context.load_cert_chain(cfg.get_cert_file(), cfg.get_cert_privkey())
 
+    # Error to handle: what if desired IP is not on this machine?
+    # Error to handle: what if desired port is in use?
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0) as sock:
         sock.bind((cfg.get_ip_addr(), cfg.get_port()))
         sock.listen(5)

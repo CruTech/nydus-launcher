@@ -25,6 +25,7 @@ SERVER_VARNAMES = {
     MCVERSION: "mc_version",
 }
 
+# TODO: check validity of form of each configuration item
 class NydusServerConfig:
 
     """
