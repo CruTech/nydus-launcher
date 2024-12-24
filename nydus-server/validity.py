@@ -1,11 +1,13 @@
 
 import os
+import datetime
 
 IP_SEG_MIN = 0
 IP_SEG_MAX = 255
 PORT_MIN = 0
 PORT_MAX = 2**16 - 1
 MC_VERSION_PARTS = 3
+TIME_FORMAT = "%d-%m-%Y %H:%M:%S"
 
 """
 Returns True if
@@ -145,5 +147,28 @@ def is_valid_minecraft_token(token):
 
 def is_valid_msal_cid(cid):
     if not isinstance(token, str):
+        return False
+    return True
+
+"""
+This function validates that a given string
+is in the correct form to represent a timestamp,
+not that the given item is itself a datetime
+object.
+"""
+def is_valid_str_timestamp(ts):
+    if not isinstance(ts, str):
+        return False
+
+    try:
+        dt = datetime.datetime.strptime(ts, TIME_FORMAT)
+    except ValueError:
+        return False
+    return True
+
+# TODO
+# Check list of system users
+def is_valid_system_username(username):
+    if not isinstance(username, str):
         return False
     return True
