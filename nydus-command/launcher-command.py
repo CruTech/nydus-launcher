@@ -1,0 +1,160 @@
+#!/usr/bin/python3
+
+import sys
+import validity
+from allocater import AllocEngine
+from NydusCommandConfig import NydusCommandConfig
+
+VIEW = "view"
+VIEW_UUID = "view-uuid"
+VIEW_IP = "view-ip"
+ALLOC = "alloc"
+RELEASE_UUID = "release-uuid"
+RELEASE_IP = "release-ip"
+CLEANUP = "cleanup"
+
+COMMANDS = [
+    VIEW,
+    VIEW_UUID,
+    VIEW_IP,
+    ALLOC,
+    RELEASE_UUID,
+    RELEASE_IP,
+    CLEANUP,
+]
+
+SIMPLE_COMMANDS = [
+    VIEW,
+    CLEANUP
+]
+
+UUID_COMMANDS = [
+    VIEW_UUID,
+    RELEASE_UUID,
+]
+
+IP_COMMANDS = [
+    VIEW_IP,
+    RELEASE_IP,
+]
+
+IP_USER_COMMANDS = [
+    ALLOC,
+]
+
+# The Nydus Command module provides a command line tool
+# which you use to interact with the server.
+# Primarily this works by modifying the file containing
+# account allocations.
+
+# Nydus Command reads from the same configuration file
+# as the Nydus server so that it knows where to find
+# the allocation database file.
+# But it doesn't store everything in the config file
+# since only the location of the allocation file needs
+# to be known.
+
+# Operations supported by Nydus Command:
+# - View allocation database; all accounts or search
+#   for specific attributes.
+# - Manually command the allocation of an account to a
+#   particular IP and system username.
+# - Manually command the release of accounts identified
+#   by uuid.
+# - Manually command the release of accounts identified
+#   by client IP to which they were allocated.
+# - Perform a cleanup of the allocation database, searching
+#   for and releasing accounts which have been allocated too long,
+#   or which are allocated to IPs/users which are no longer
+#   switched on/logged in.
+
+def usage():
+    print("Usage: nydus-command <com>")
+    print("Valid commands are: {}".format(", ".join(COMMANDS)))
+    exit(1)
+
+def ip_user_usage(command):
+    assert command in COMMANDS, "Passed '{}' as a command when it's not in the list of valid commands.".format(command)
+    print("Usage: nydus-command {} <ip address> <username>".format(command))
+    exit(1)
+
+def uuid_usage(command):
+    assert command in COMMANDS, "Passed '{}' as a command when it's not in the list of valid commands.".format(command)
+    print("Usage: nydus-command {} <uuid>".format(command))
+    exit(1)
+
+def ip_usage(command):
+    assert command in COMMANDS, "Passed '{}' as a command when it's not in the list of valid commands.".format(command)
+    print("Usage: nydus-command {} <ip address>".format(command))
+    exit(1)
+
+def process_args():
+    cmdargs = sys.argv[:1]
+
+    if len(cmdargs) < 1:
+        usage()
+
+    command = cmdargs[0]
+    if command in COMMANDS:
+
+        if command in SIMPLE_COMMANDS:
+            data = ""
+
+        elif command in UUID_COMMANDS:
+            if len(cmdargs) < 2:
+                uuid_usage(command)
+            data = cmdargs[1]
+            
+            if not validity.is_valid_minecraft_uuid(data):
+                uuid_usage(command)
+
+        elif command in IP_COMMANDS:
+            if len(cmdargs) < 2:
+                ip_usage(command)
+            data = cmdargs[1]
+            if not validity.is_valid_ipaddr(data):
+                ip_usage(command)
+
+        elif command in IP_USER_COMMANDS:
+            if len(cmdargs) < 3:
+                ip_user_usage(command)
+            ip = cmdargs[1]
+            user = cmdargs[2]
+            if not validity.is_valid_ipaddr(ip):
+                ip_user_usage(command)
+            if not validity.is_valid_system_username(user):
+                ip_user_usage(command)
+
+            data = (ip, user)
+    else:
+        usage()
+    
+    return (command, data)
+
+def command_main(cfg):
+
+    command, data = process_args()
+
+    allocengine = AllocEngine(cfg.get_alloc_file())
+
+    if command == VIEW:
+        pass
+    elif command == VIEW_UUID:
+        pass
+    elif command == VIEW_IP:
+        pass
+    elif command == ALLOC:
+        client_ip = data[0]
+        client_username = data[1]
+    elif command == RELEASE_UUID:
+        pass
+    elif command == RELEASE_IP:
+        pass
+    elif command == CLEANUP:
+        pass
+
+def main():
+    cfg = startup()
+    command_main(cfg)
+
+main()
