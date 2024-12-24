@@ -12,6 +12,7 @@ ALLOC = "alloc"
 RELEASE_UUID = "release-uuid"
 RELEASE_IP = "release-ip"
 CLEANUP = "cleanup"
+HELP = "help"
 
 COMMANDS = [
     VIEW,
@@ -21,11 +22,13 @@ COMMANDS = [
     RELEASE_UUID,
     RELEASE_IP,
     CLEANUP,
+    HELP,
 ]
 
 SIMPLE_COMMANDS = [
     VIEW,
-    CLEANUP
+    CLEANUP,
+    HELP,
 ]
 
 UUID_COMMANDS = [
@@ -38,7 +41,7 @@ IP_COMMANDS = [
     RELEASE_IP,
 ]
 
-IP_USER_COMMANDS = [
+IP_USER_UUID_COMMANDS = [
     ALLOC,
 ]
 
@@ -68,14 +71,18 @@ IP_USER_COMMANDS = [
 #   or which are allocated to IPs/users which are no longer
 #   switched on/logged in.
 
+def help():
+    pass
+    exit(0)
+
 def usage():
     print("Usage: nydus-command <com>")
     print("Valid commands are: {}".format(", ".join(COMMANDS)))
     exit(1)
 
-def ip_user_usage(command):
+def ip_user_uuid_usage(command):
     assert command in COMMANDS, "Passed '{}' as a command when it's not in the list of valid commands.".format(command)
-    print("Usage: nydus-command {} <ip address> <username>".format(command))
+    print("Usage: nydus-command {} <ip address> <username> <uuid>".format(command))
     exit(1)
 
 def uuid_usage(command):
@@ -115,17 +122,20 @@ def process_args():
             if not validity.is_valid_ipaddr(data):
                 ip_usage(command)
 
-        elif command in IP_USER_COMMANDS:
-            if len(cmdargs) < 3:
-                ip_user_usage(command)
+        elif command in IP_USER_UUID_COMMANDS:
+            if len(cmdargs) < 4:
+                ip_user_uuid_usage(command)
             ip = cmdargs[1]
             user = cmdargs[2]
+            uuid = cmdargs[3]
             if not validity.is_valid_ipaddr(ip):
-                ip_user_usage(command)
+                ip_user_uuid_usage(command)
             if not validity.is_valid_system_username(user):
-                ip_user_usage(command)
+                ip_user_uuid_usage(command)
+            if not validity.is_valid_minecraft_uuid(uuid):
+                ip_user_uuid_usage(command)
 
-            data = (ip, user)
+            data = (ip, user, uuid)
     else:
         usage()
     
@@ -138,19 +148,22 @@ def command_main(cfg):
     allocengine = AllocEngine(cfg.get_alloc_file())
 
     if command == VIEW:
-        pass
+        print(allocengine)
     elif command == VIEW_UUID:
-        pass
+        print(allocengine.view_uuid(data))
     elif command == VIEW_IP:
-        pass
+        print(allocengine.view_ip(data))
     elif command == ALLOC:
         client_ip = data[0]
         client_username = data[1]
+        uuid = data[2]
+        allocengine.allocate_uuid(uuid, client_ip, client_username)
     elif command == RELEASE_UUID:
-        pass
+        allocengine.release_account_uuid(data)
     elif command == RELEASE_IP:
-        pass
+        allocengine.release_account_ip(data)
     elif command == CLEANUP:
+        # TODO
         pass
 
 def main():

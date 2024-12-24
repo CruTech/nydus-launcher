@@ -347,7 +347,7 @@ class AllocEngine:
         if not validity.is_valid_ipaddr(client_ip):
             raise ValueError("Client IP was not a valid IP address: {}".format(client_ip))
 
-        if not validify.is_valid_system_username(client_username):
+        if not validity.is_valid_system_username(client_username):
             raise ValueError("Client username was not a valid system username: {}".format(client_username))
 
         # Release everything currently allocated to this client
@@ -373,7 +373,7 @@ class AllocEngine:
             raise ValueError("Not a valid Minecraft uuid: {}".format(uuid))
 
         to_release = [acc for acc in self.accounts\
-                if acc.is_allocated() and acc.get_uuid() == uuid]
+                if acc.is_allocated() and acc.get_mc_uuid() == uuid]
 
         for acc in to_release:
             acc.release()
@@ -394,3 +394,25 @@ class AllocEngine:
             acc.release()
         self.write_changes()
     
+    """
+    Finds an account (or all accounts if there are more than one) of a specific
+    uuid, and allocates them to the given client IP address and system username
+    Overwrites existing allocation of the account(s) in question.
+    """
+    def allocate_uuid(self, uuid, client_ip, client_username):
+        if not validity.is_valid_ipaddr(client_ip):
+            raise ValueError("Client IP was not a valid IP address: {}".format(client_ip))
+
+        if not validity.is_valid_system_username(client_username):
+            raise ValueError("Client username was not a valid system username: {}".format(client_username))
+
+        if not validity.is_valid_minecraft_uuid(uuid):
+            raise ValueError("Not a valid Minecraft uuid: {}".format(uuid))
+
+        to_allocate = [acc for acc in self.accounts\
+                if acc.get_mc_uuid() == uuid]
+
+        for acc in to_allocate:
+            acc.allocate(client_ip, client_username)
+
+        self.write_changes()
