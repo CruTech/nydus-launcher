@@ -249,7 +249,14 @@ class AllocEngine:
 
     def load_alloc_db(self):
         with open(path, "r") as f:
+
+            first_line = True
             for line in f:
+
+                # Skip first line, since it contains the header for each column
+                if first_line:
+                    continue
+
                 line = line.strip()
                 parts = line.split(ALLOC_DELIM)
                 if len(parts) != AllocAccount.num_fields():

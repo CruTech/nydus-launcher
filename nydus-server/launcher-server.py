@@ -5,9 +5,14 @@ import ssl
 import random
 import datetime
 import threading
+from allocater import AllocEngine
 from NydusServerConfig import NydusServerConfig
 
+# The lock which controls access to the account allocation file
+ALLOCDB_LOCK = threading.Lock()
+
 SERVER_CONFIG_FILE = "/etc/nydus-launcher/server.conf"
+ALLOC_FILE = "/etc/nydus-launcher/nydus-alloc.csv"
 
 MAXMSG = 1024
 
@@ -50,17 +55,25 @@ def randomstring(strlen):
     out = "".join([random.choice(allchars) for i in range(strlen)])
     return out
 
-def allocate_account(conn, addr, sys_username):
+def allocate_account(cfg, conn, addr, sys_username):
     # Allocate a Minecraft account to that username
     # and that IP address
 
+    client_ip = addr[0]
+
     version = cfg.get_mc_version()
 
+    with ALLOCDB_LOCK:
+        alloc_engine = AllocEngine(cfg.get_alloc_file())
+        mc_account = alloc_engine.allocate_one_account(client_ip, sys_username)
+
     # Error to handle: no account could be obtained
-    mc_account = get_next_account()
-    mc_username = mc_account.get_username()
-    mc_uuid = mc_account.get_uuid()
-    mc_token = mc_account.get_token()
+    # TODO what kind of exception?
+    if mc_account == None:
+        raise Exception("Could not allocate a Minecraft account when requested")
+    mc_username = mc_account.get_mc_username()
+    mc_uuid = mc_account.get_mc_uuid()
+    mc_token = mc_account.get_mc_token()
 
     allocation_str = ALLOC_BASE.format(version,
             mc_username, mc_uuid, mc_token)
@@ -71,17 +84,22 @@ def allocate_account(conn, addr, sys_username):
     while sent_data < len(allocation_data):
         sent_data += conn.send(allocation_data[sent_data:])
 
-def release_account(conn, addr):
+def release_account(cfg, conn, addr):
     # Release the account on that address
-    print("Released account from host {}".format(addr))
 
-def handle_connection(conn, addr):
+    client_ip = addr[0]
+
+    with ALLOCDB_LOCK:
+        alloc_engine = AllocEnginge(cfg.get_alloc_file())
+        alloc_engine.release_account_ip(client_ip)
+
+def handle_connection(cfg, conn, addr):
     try:
-        client_exchange(conn, addr)
+        client_exchange(cfg, conn, addr)
     except TimeoutError:
         print("Client {} took too long to respond".format(addr))
 
-def client_exchange(conn, addr):
+def client_exchange(cfg, conn, addr):
 
     received_count = -1
     str_data = ""
@@ -113,11 +131,11 @@ def client_exchange(conn, addr):
         # Check the username exists, something like
         # is_real_system_username(username)
         
-        allocate_account(conn, addr, sys_username)
+        allocate_account(cfg, conn, addr, sys_username)
 
     elif str_data.startswith(RELEASE_COMMAND):
         
-        release_account(conn, addr)
+        release_account(cfg, conn, addr)
 
     else:
         print("Invalid connection from host {}".format(addr))
