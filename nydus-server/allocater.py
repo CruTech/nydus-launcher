@@ -90,6 +90,9 @@ class AllocAccount:
         self.set_mc_token(mc_token)
         self.set_token_time(token_time)
 
+    def num_fields():
+        return 7
+
     """
     There should not be accounts which have only some of the first
     3 fields filled but not all. However, if such accounts exist,
@@ -241,5 +244,77 @@ class AllocEngine:
             raise PermissionError("Accounts database file was not readable. Given path is {}".format(path))
         
         self.path = path
+        self.accounts = []
+        self.load_alloc_db()
 
     def load_alloc_db(self):
+        with open(path, "r") as f:
+            for line in f:
+                line = line.strip()
+                parts = line.split(ALLOC_DELIM)
+                if len(parts) != AllocAccount.num_fields():
+                    raise ValueError("Line in account allocation database was invalid. It should have had {} {}-separated elements, but had {}. Line looked like: {}".format(AllocAccount.num_fields(), ALLOC_DELIM, len(parts), line))
+                
+                # Note: this instantiation depends on the order of fields
+                # being the same in the db file and in the Account class
+                # constructor
+                acc = AllocAccount(*parts)
+                self.accounts.append(acc)
+
+    """
+    If an unallocated account is found, marks it allocated and
+    returns the object representing it.
+    If no unallocated account is found, returns None.
+    
+    Always deallocates all accounts currently allocated to this client IP
+    """
+    def allocate_one_account(self, client_ip, client_username):
+
+        if not validity.is_valid_ipaddr(client_ip):
+            raise ValueError("Client IP was not a valid IP address: {}".format(client_ip))
+
+        if not validify.is_valid_system_username(client_username):
+            raise ValueError("Client username was not a valid system username: {}".format(client_username))
+
+        # Release everything currently allocated to this client
+        for acc in self.accounts:
+            if acc.is_allocated() and acc.get_client_ip() == client_ip:
+                acc.release()
+
+        for acc in self.accounts:
+            if not acc.is_allocated():
+                acc.allocate(client_ip, client_username)
+                return acc
+        return None
+
+    """
+    Finds account by uuid
+    If the account is found and currently allocated, releases it
+    Note that if (somehow) two lines have the same account uuid,
+    both will be released.
+    """
+    def release_account_uuid(self, uuid):
+        if not validity.is_valid_minecraft_uuid(uuid):
+            raise ValueError("Not a valid Minecraft uuid: {}".format(uuid))
+
+        to_release = [acc for acc in self.accounts\
+                if acc.is_allocated() and acc.get_uuid() == uuid]
+
+        for acc in to_release:
+            acc.release()
+
+    """
+    Finds all accounts allocated to the given client IP
+    and releases them.
+    """
+    def release_account_ip(self, client_ip):
+        if not validity.is_valid_ipaddr(client_ip):
+            raise ValueError("Not a valid IP address: {}".format(client_ip))
+
+        to_release = [acc for acc in self.accounts \
+                if acc.is_allocated() and acc.get_client_ip() == client_ip]
+
+        for acc in to_release:
+            acc.release()
+            
+    
