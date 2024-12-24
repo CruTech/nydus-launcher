@@ -71,6 +71,16 @@ TOKEN_TIMEOUT = datetime.timedelta(hours=12)
 
 TIME_FORMAT = "%d-%m-%Y %H:%M:%S"
 
+FIELDS = [
+    "client_ip",
+    "client_username",
+    "alloc_time",
+    "mc_username",
+    "mc_uuid",
+    "mc_token",
+    "token_time"
+]
+
 """
 Represents one line of the account allocation
 database file.
@@ -91,7 +101,26 @@ class AllocAccount:
         self.set_token_time(token_time)
 
     def num_fields():
-        return 7
+        return len(FIELDS)
+
+    """
+    Creates the header line to go in the top of the allocation
+    database file.
+    Does not include a newline on the end
+    """
+    def make_header():
+        return ALLOC_DELIM.join(FIELDS)
+
+    def copy(self):
+        return AllocAccount(
+            self.get_client_ip(),
+            self.get_client_username()
+            self.get_alloc_time()
+            self.get_mc_username()
+            self.get_mc_uuid()
+            self.get_mc_token()
+            self.get_token_time()
+        )
 
     """
     There should not be accounts which have only some of the first
@@ -247,6 +276,44 @@ class AllocEngine:
         self.accounts = []
         self.load_alloc_db()
 
+    def __repr__(self):
+        return AllocEngine.list_to_string(self.accounts)
+
+    """
+    Given a list of AllocAccount objects, creates a string
+    consisting of lines. The first line is the header for AllocAccount fields,
+    all other lines represent the accounts in the provided list.
+    The string is returned.
+    """
+    def list_to_string(acclist):
+        assert isinstance(acclist, list), "Provided object must be a list of AllocAccounts. Was {}".format(acclist)
+        for elem in acclist:
+            assert isinstance(elem, AllocAccount), "Provided object must be a list of AllocAccounts. Contained an element '{}'".format(elem)
+        outstr = ""
+        outstr += "{}\n".format(AllocAccount.make_header())
+        for acc in acclist:
+            outstr += "{}\n".format(acc)
+        return outstr
+
+    def view_uuid(self, uuid):
+        if not validity.is_valid_minecraft_uuid(uuid):
+            raise ValueError("Not a valid Minecraft uuid: {}".format(uuid))
+
+        to_view = [acc for acc in self.accounts if acc.get_mc_uuid() == uuid]
+        return AllocEngine.list_to_string(to_view)
+
+    def view_ip(self, client_ip):
+        if not validity.is_valid_ipaddr(client_ip):
+            raise ValueError("Not a valid IP address: {}".format(client_ip))
+
+        to_view = [acc for acc in self.accounts if acc.get_mc_uuid() == uuid]
+        return AllocEngine.list_to_string(to_view)
+
+    def write_changes(self):
+        with open(path, "w") as f:
+            f.write(str(self))
+            f.flush()
+
     def load_alloc_db(self):
         with open(path, "r") as f:
 
@@ -291,6 +358,7 @@ class AllocEngine:
         for acc in self.accounts:
             if not acc.is_allocated():
                 acc.allocate(client_ip, client_username)
+                self.write_changes()
                 return acc
         return None
 
@@ -309,6 +377,7 @@ class AllocEngine:
 
         for acc in to_release:
             acc.release()
+        self.write_changes()
 
     """
     Finds all accounts allocated to the given client IP
@@ -323,5 +392,5 @@ class AllocEngine:
 
         for acc in to_release:
             acc.release()
-            
+        self.write_changes()
     
