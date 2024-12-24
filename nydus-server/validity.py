@@ -123,3 +123,27 @@ def is_valid_minecraft_version(vers):
         if not is_positive_integer(seg):
             return False
     return True
+
+# TODO
+# More precise checks for valid username, uuid,
+# and access token, and msal cid
+# Need to know the exact rules.
+def is_valid_minecraft_username(acc):
+    if not isinstance(acc, str):
+        return False
+    return True
+
+def is_valid_minecraft_uuid(uuid):
+    if not isinstance(uuid, str):
+        return False
+    return True
+
+def is_valid_minecraft_token(token):
+    if not isinstance(token, str):
+        return False
+    return True
+
+def is_valid_msal_cid(cid):
+    if not isinstance(token, str):
+        return False
+    return True
