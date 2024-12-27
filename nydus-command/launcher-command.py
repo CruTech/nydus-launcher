@@ -13,6 +13,7 @@ RELEASE_UUID = "release-uuid"
 RELEASE_IP = "release-ip"
 CLEANUP = "cleanup"
 HELP = "help"
+CREATE = "create"
 
 COMMANDS = [
     VIEW,
@@ -22,6 +23,7 @@ COMMANDS = [
     RELEASE_UUID,
     RELEASE_IP,
     CLEANUP,
+    CREATE,
     HELP,
 ]
 
@@ -43,6 +45,10 @@ IP_COMMANDS = [
 
 IP_USER_UUID_COMMANDS = [
     ALLOC,
+]
+
+FILE_COMMANDS = [
+    CREATE,
 ]
 
 # The Nydus Command module provides a command line tool
@@ -70,6 +76,10 @@ IP_USER_UUID_COMMANDS = [
 #   for and releasing accounts which have been allocated too long,
 #   or which are allocated to IPs/users which are no longer
 #   switched on/logged in.
+# - Authenticate a list of accounts and generate a new allocation
+#   database file from that. The list of accounts will likely
+#   be provided as a list of email addresses and then the user
+#   will have to manually authenticate each through a browser via password.
 
 def help():
     pass
@@ -162,6 +172,8 @@ def command_main(cfg):
         allocengine.release_account_uuid(data)
     elif command == RELEASE_IP:
         allocengine.release_account_ip(data)
+    elif command == CREATE:
+        pass
     elif command == CLEANUP:
         # TODO
         pass
