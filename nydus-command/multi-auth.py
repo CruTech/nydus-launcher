@@ -5,6 +5,8 @@ import subprocess
 from msal import PublicClientApplication
 from MCAccount import MCAccount
 
+MS_USERNAMES = []
+
 # Needs to come out of configuration
 MSAL_CLIENT_ID = ""
 
@@ -15,6 +17,11 @@ SCOPES_NEEDED = ["XboxLive.signin"]
 # Usually if an expected key is missing, an error will be thrown and
 # the program will move on to attempting the next account's authentication.
 AUTHORITY_URL = "https://login.microsoftonline.com/consumers"
+
+AUTH_HEADERS = {
+    "Content-Type": "application/json",
+    "Accept": "application/json"
+}
 
 MSAL_TOKEN_KEY = "access_token"
 MSAL_ERROR_KEYS = ("error", "error_description", "correlation_id")
@@ -118,12 +125,8 @@ def auth_xboxlive(result):
         "RelyingParty": "http://auth.xboxlive.com",
         "TokenType": "JWT"
     }
-    auth_headers = {
-        "Content-Type": "application/json",
-        "Accept": "application/json"
-    }
 
-    xboxlive_resp = requests.post(XBL_URL, json=xboxlive_props, headers=auth_headers)
+    xboxlive_resp = requests.post(XBL_URL, json=xboxlive_props, headers=AUTH_HEADERS)
     xbljson = xboxlive_resp.json()
 
     xbltok = None
@@ -152,7 +155,7 @@ def auth_xsts(xbltok):
         "TokenType": "JWT"
     }
 
-    xsts_resp = requests.post(XSTS_URL, json=xsts_props, headers=auth_headers)
+    xsts_resp = requests.post(XSTS_URL, json=xsts_props, headers=AUTH_HEADERS)
 
     xstsjson = xsts_resp.json()
 
@@ -179,7 +182,7 @@ def auth_minecraft(xststok, xstshash):
     }
 
     minecraft_resp = requests.post(MC_AUTH_URL,
-            json=minecraft_props, headers=auth_headers)
+            json=minecraft_props, headers=AUTH_HEADERS)
 
     mc_json = minecraft_resp.json()
     
@@ -200,10 +203,11 @@ account. These are needed for manual Minecraft launch.
 A tuple is always returned. None will be substituted in
 the relevant location if a piece of data cannot be found.
 """
-def get_minecraft_details(mc_access_tok)
-    auth_headers["Authorization"] = "Bearer {}".format(mc_access_tok)
+def get_minecraft_details(mc_access_tok):
+    profile_headers = AUTH_HEADERS.copy()
+    profile_headers["Authorization"] = "Bearer {}".format(mc_access_tok)
 
-    profile_resp = requests.get(MC_PROFILE_URL, headers=auth_headers)
+    profile_resp = requests.get(MC_PROFILE_URL, headers=profile_headers)
 
     profile_json = profile_resp.json()
 
@@ -298,7 +302,7 @@ def auth_all(ms_usernames):
 
     authd_accounts = []
     for accname in ms_usernames:
-        acc_res = auth_account(accname)
+        acc_res = auth_account(accname, app)
         if acc_res:
             authd_accounts.append(acc_res)
         else:
@@ -307,3 +311,4 @@ def auth_all(ms_usernames):
     print("In total, authd {} accounts".format(len(authd_accounts)))
     for acc in authd_accounts:
         print(acc.get_username())
+

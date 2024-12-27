@@ -92,7 +92,6 @@ Given a string, tells you if the string
 represents an integer
 """
 def is_integer(num):
-    if nu
     if not num.isdecimal():
         return False
     try:
