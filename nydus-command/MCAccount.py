@@ -1,10 +1,12 @@
+import validity
+
 
 class MCAccount:
 
     def __init__(self, username, uuid, token):
-        assert isinstance(username, str), "Minecraft username should have been string; was {}".format(username)
-        assert isinstance(uuid, str), "Minecraft uuid should have been string; was {}".format(uuid)
-        assert isinstance(token, str), "Minecraft token should have been string; was {}".format(token)
+        assert validity.is_valid_minecraft_username(username), "Minecraft username '{}' was invalid".format(username)
+        assert validity.is_valid_minecraft_uuid(uuid), "Minecraft uuid '{}' was invalid".format(uuid)
+        assert validity.is_valid_minecraft_token(token), "Minecraft token '{}' was invalid".format(token)
         self.username = username
         self.uuid = uuid
         self.token = token
