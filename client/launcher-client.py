@@ -3,7 +3,7 @@
 import ssl
 import socket
 import common
-from NydusClientConfig import NydusClientConfig
+from nydus.client import ClientConfig
 
 MAXMSG = 1024
 

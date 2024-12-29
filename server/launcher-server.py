@@ -5,7 +5,7 @@ import ssl
 import random
 import datetime
 import threading
-from allocater import AllocEngine
+from nydus.common.allocater import AllocEngine
 from nydus.server import ServerConfig
 
 # The lock which controls access to the account allocation file

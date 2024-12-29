@@ -1,8 +1,8 @@
 #!/usr/bin/python3
 
 import sys
-import validity
-from allocater import AllocEngine
+from nydus.common import validity
+from nydus.common.allocater import AllocEngine
 from nydus.cli import CliConfig
 
 PROGNAME = "nydus-cli"

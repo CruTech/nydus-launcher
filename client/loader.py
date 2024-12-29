@@ -4,7 +4,7 @@ import common
 import os
 import json
 from json.decoder import JSONDecodeError
-from DownloadFile import DownloadFile
+from nydus.client.DownloadFile import DownloadFile
 
 # Use the json files under .minecraft to find all the jar files we'll need
 # to run Minecraft.
