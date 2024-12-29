@@ -5,8 +5,6 @@ import socket
 import common
 from NydusClientConfig import NydusClientConfig
 
-CLIENT_CONFIG_FILE = "/etc/nydus-launcher/client.conf"
-
 MAXMSG = 1024
 
 # Delimiter character used in allocation messages
@@ -91,7 +89,7 @@ def client_main(cfg):
 
 
 def startup():
-    cfg = NydusConfig(CLIENT_CONFIG_FILE)
+    cfg = ClientConfig()
     return cfg
 
 def main():
