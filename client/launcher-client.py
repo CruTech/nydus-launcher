@@ -2,7 +2,7 @@
 
 import ssl
 import socket
-import common
+from nydus.client import utils
 from nydus.client import ClientConfig
 
 MAXMSG = 1024
@@ -29,7 +29,7 @@ MSG_END = "\n"
 
 def request(ssock):
     
-    sys_username = common.get_username()
+    sys_username = utils.get_username()
     request_str = "{} {}\n".format(REQUEST_COMMAND, sys_username)
     request_data = request_str.encode(encoding=NETENC)
     

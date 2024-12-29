@@ -1,6 +1,5 @@
-#!/usr/bin/python3
 
-import common
+from nydus.client import utils
 import os
 import requests
 import hashlib
@@ -47,7 +46,7 @@ MC_DOWNLOAD_DIR = "libraries"
 class DownloadFile:
 
     """
-    url: string, conforming to common.is_download_url
+    url: string, conforming to utils.is_download_url
     sha1: string, a sha1 hash of the file against which the file will be
         validated
     name: string, the filename which will be downloaded
@@ -59,10 +58,10 @@ class DownloadFile:
     def __init__(self, url, sha1, name="", path=""):
 
 
-        assert common.is_download_url(url), "url provided to DownloadFile is not a valid file downloading url: {}".format(url)
+        assert utils.is_download_url(url), "url provided to DownloadFile is not a valid file downloading url: {}".format(url)
         self.url = url
 
-        assert common.is_sha1(sha1), "file hash provided to DownloadFile does not look like a sha1 digest: {}".format(sha1)
+        assert utils.is_sha1(sha1), "file hash provided to DownloadFile does not look like a sha1 digest: {}".format(sha1)
         self.sha1 = sha1
 
         if self.is_download_filepath(path):
@@ -107,7 +106,7 @@ class DownloadFile:
         if filepath == "":
             return False
 
-        mc_path = common.get_minecraft_path()
+        mc_path = utils.get_minecraft_path()
 
         if os.path.isabs() and filepath.startswith(mc_path):
             return True
@@ -137,10 +136,10 @@ class DownloadFile:
     the minecraft directory, but this position is not included in the url's path
     """
     def infer_path(self):
-        url_path = common.get_url_path(self.get_url())
+        url_path = utils.get_url_path(self.get_url())
         url_path = os.path.dirname(url_path)
 
-        mc_path = common.get_minecraft_path()
+        mc_path = utils.get_minecraft_path()
 
         final_path = os.path.join(mc_path, MC_DOWNLOAD_DIR, url_path)
 
@@ -151,7 +150,7 @@ class DownloadFile:
     of the download URL
     """
     def infer_name(self):
-        url_path = common.get_url_path(self.get_url())
+        url_path = utils.get_url_path(self.get_url())
         self.name = os.path.basename(url_path)
 
     """
@@ -174,7 +173,7 @@ class DownloadFile:
     Returns nothing; failure raises errors
     """
     def create_path(self):
-        mc_path = common.get_minecraft_path()
+        mc_path = utils.get_minecraft_path()
         assert os.path.isdir(mc_path), "User's Minecraft directory does not exist: {}".format(mc_path)
 
         if os.path.isdir(self.get_path()):

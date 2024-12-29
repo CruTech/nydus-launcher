@@ -1,9 +1,8 @@
-#!/usr/bin/python3
 
-import common
 import os
 import json
 from json.decoder import JSONDecodeError
+from nydus.client import utils
 from nydus.client.DownloadFile import DownloadFile
 
 # Use the json files under .minecraft to find all the jar files we'll need
@@ -211,7 +210,7 @@ def all_json_list_val(jlist, keyattr, error=True):
 Gets all the available Minecraft versions that we know about
 """
 def get_all_versions():
-    mc_path = common.get_minecraft_path()
+    mc_path = utils.get_minecraft_path()
 
     jdata = read_json_file(get_manifest_path())
 
@@ -240,7 +239,7 @@ def get_version_json_path(version):
     
     if not is_valid_version(version):
         raise ValueError("version was not valid: {}".format(version))
-    mc_path = common.get_minecraft_path()
+    mc_path = utils.get_minecraft_path()
     
     version_json = os.path.join(mc_path, "versions", version, "{}.json".format(version))
     return version_json
@@ -249,7 +248,7 @@ def get_version_json_path(version):
 Gives full path to the version manifest file
 """
 def get_manifest_path():
-    mc_path = common.get_minecraft_path()
+    mc_path = utils.get_minecraft_path()
     manifest_path = os.path.join(mc_path, "versions", "version_manifest_v2.json")
 
 """
@@ -350,7 +349,7 @@ def download_libraries(version):
         
         # The path for these artifacts doesn't include the dir
         # 'libraries' that they are all under
-        mc_path = common.get_minecraft_path()
+        mc_path = utils.get_minecraft_path()
         full_path = os.path.join(mc_path, "libraries", path)
         fname = os.path.basename(full_path)
         dirpath = os.path.basename(fullpath)

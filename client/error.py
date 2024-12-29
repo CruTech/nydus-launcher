@@ -1,4 +1,3 @@
-#!/usr/bin/python3
 
 # If any unrecoverable errors occur, this module reports
 # the error message to the user with a graphical window.

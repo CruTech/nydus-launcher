@@ -1,4 +1,3 @@
-#!/usr/bin/python3
 
 """
 Utilities needed in multiple Nydus client modules
