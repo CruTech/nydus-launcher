@@ -3,7 +3,7 @@
 import requests
 import subprocess
 from msal import PublicClientApplication
-from nydus.cli.MCAccount import MCAccount
+from nydus.common.MCAccount import MCAccount
 
 MS_USERNAMES = []
 
