@@ -3,6 +3,9 @@ import os
 from nydus.common import validity
 from nydus.common import Config
 
+# Remember this needs to be the same as the server config file
+CLI_CONFIG_FILE = "/etc/nydus-launcher/server.conf"
+
 IPADDR = "IpAddr"
 PORT = "Port"
 CERTFILE = "CertFile"
@@ -10,8 +13,8 @@ CERTPRIVKEY = "CertPrivKey"
 MCVERSION = "McVersion"
 MSALCID = "MSALClientID"
 ALLOCFILE = "AllocFile"
-COMMAND_PARNAMES = [IPADDR, PORT, CERTFILE, CERTPRIVKEY, MCVERSION]
-COMMAND_DEFCONFIG = {
+CLI_PARNAMES = [IPADDR, PORT, CERTFILE, CERTPRIVKEY, MCVERSION]
+CLI_DEFCONFIG = {
     IPADDR: "192.168.1.1",
     PORT: "2011",
     CERTFILE: "nydus-server.crt",
@@ -27,11 +30,14 @@ COMMAND_DEFCONFIG = {
 # configuration items present in the configuration file
 # which the Cli does not need to store. Only data which
 # needs to be stored appears in the VARNAMES dictionary.
-COMMAND_VARNAMES = {
+CLI_VARNAMES = {
     ALLOCFILE: "alloc_file",
 }
 
 class CliConfig(Config):
+
+    def __init__(self, path=CLI_CONFIG_FILE, parnames=CLI_PARNAMES, defconfig=CLI_DEFCONFIG, varnames=CLI_VARNAMES):
+        super().__init(path, parnames, defconfig, varnames)
 
     def validate_config(self):
         if not validity.is_valid_file(self.alloc_file):

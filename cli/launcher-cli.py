@@ -3,7 +3,7 @@
 import sys
 import validity
 from allocater import AllocEngine
-from NydusCliConfig import NydusCliConfig
+from nydus.cli import CliConfig
 
 PROGNAME = "nydus-cli"
 
@@ -153,7 +153,7 @@ def process_args():
     
     return (command, data)
 
-def command_main(cfg):
+def cli_main(cfg):
 
     command, data = process_args()
 
@@ -180,8 +180,12 @@ def command_main(cfg):
         # TODO
         pass
 
+def startup():
+    cfg = CliConfig()
+    return cfg
+
 def main():
     cfg = startup()
-    command_main(cfg)
+    cli_main(cfg)
 
 main()
