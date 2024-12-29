@@ -3,6 +3,8 @@ import os
 from nydus.common import validity
 from nydus.common import Config
 
+SERVER_CONFIG_FILE = "/etc/nydus-launcher/server.conf"
+
 IPADDR = "IpAddr"
 PORT = "Port"
 CERTFILE = "CertFile"
@@ -34,6 +36,9 @@ SERVER_VARNAMES = {
 }
 
 class ServerConfig(Config):
+
+    def __init__(self, path=SERVER_CONFIG_FILE, parnames=SERVER_PARNAMES, defconfig=SERVER_DEFCONFIG, varnames=SERVER_VARNAMES):
+        super().__init__(path, parnames, defconfig, varnames)
 
     def validate_config(self):
         if not validity.is_valid_ipaddr(self.ip_addr):

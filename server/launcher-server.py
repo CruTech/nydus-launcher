@@ -6,12 +6,11 @@ import random
 import datetime
 import threading
 from allocater import AllocEngine
-from NydusServerConfig import NydusServerConfig
+from nydus.server import ServerConfig
 
 # The lock which controls access to the account allocation file
 ALLOCDB_LOCK = threading.Lock()
 
-SERVER_CONFIG_FILE = "/etc/nydus-launcher/server.conf"
 ALLOC_FILE = "/etc/nydus-launcher/nydus-alloc.csv"
 
 MAXMSG = 1024
@@ -143,7 +142,7 @@ def client_exchange(cfg, conn, addr):
     conn.close()
 
 def startup():
-    cfg = NydusServerConfig(SERVER_CONFIG_FILE)
+    cfg = ServerConfig()
     return cfg
 
 def server_main(cfg):
