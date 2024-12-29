@@ -1,5 +1,7 @@
 
 import os
+from nydus.common import validity
+from nydus.common import Config
 
 SERVERIPADDR = "ServerIpAddr"
 PORT = "Port"
@@ -19,9 +21,7 @@ CLIENT_VARNAMES = {
     CACHAINFILE: "ca_chain",
 }
 
-# TODO check validity of form of each configuration item
-
-class NydusClientConfig:
+class ClientConfig(Config):
 
     """
     path: a string, path to the configuration file to read

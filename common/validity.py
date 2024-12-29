@@ -171,3 +171,80 @@ def is_valid_system_username(username):
     if not isinstance(username, str):
         return False
     return True
+
+"""
+A 'parname' or 'parameter name' is the name of a configuration
+parameter as found in a config file used by some part of the Nydus launcher.
+Parnames must be strings and must not contain an equals sign
+or any whitespace.
+"""
+def is_valid_parname(parname):
+    if not isinstance(parname, str):
+        return False
+    if parname.find("=") != -1:
+        return False
+    if len(parname.split()) > 1:
+        return False
+    return True
+
+"""
+Checks for the given object being a list
+of valid parnames.
+"""
+def is_valid_parnames(parnames):
+    if not isinstance(parnames, list):
+        return False
+    for p in parnames:
+        if not is_valid_parname(p):
+            return False
+    return True
+
+"""
+A 'defconfig' is a dictionary where the keys are parnames
+and the values are default values for those parameters.
+"""
+def is_valid_defconfig(defconfig):
+    if not isinstance(defconfig, dict):
+        return False
+    if not is_valid_parnames(defconfig.keys()):
+        return False
+    for k in defconfig:
+        if not isinstance(defconfig[k], str):
+            return False
+    return True
+
+"""
+A 'varname' is the name of a class attribute under which
+the value of a config parameter will be stored.
+It must be
+1) a string
+2) a valid python identified
+3) not overlap with any existing Nydus Config class attributes
+"""
+def is_valid_varname(varname)
+    if not isinstance(varrname, str):
+        return False
+    if not varname.isidentifier():
+        return False
+
+    nydus_config_reserved = ["path", "parnames", "varnames"]
+    if varname in nydus_config_reserved:
+        return False
+    return True
+
+"""
+A 'varnames' is a dictionary where the keys are parnames
+and the values are class attribute names which will store
+the value of those parameters.
+That is, the value must be a valid python identifier.
+"""
+def is_valid_varnames(varnames):
+    if not isinstance(varnames, dict):
+        return False
+    if not is_valid_parnames(varnames.keys()):
+        return False
+    for k in varnames:
+        attrname = varnames[k]
+        if not is_valid_varname(attrname):
+            return False
+    return True

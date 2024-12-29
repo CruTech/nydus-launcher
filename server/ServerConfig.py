@@ -1,6 +1,7 @@
 
 import os
-import validity
+from nydus.common import validity
+from nydus.common import Config
 
 IPADDR = "IpAddr"
 PORT = "Port"
@@ -32,66 +33,7 @@ SERVER_VARNAMES = {
     ALLOCFILE: "alloc_file",
 }
 
-# TODO: check validity of form of each configuration item
-class NydusServerConfig:
-
-    """
-    path: a string, path to the configuration file to read
-    config_dict: a dictionary with string keys and values
-        Each key is one configuration parameter.
-        Each value is the default for that parameter.
-    """
-    def __init__(self, path):
-        assert isinstance(path, str), "Configuration file path must be a string. Was {}".format(path)
-
-        if not os.path.isfile(path):
-            raise FileNotFoundError("Configuration file could not be found: {}".format(path))
-
-        for parname in SERVER_PARNAMES:
-            setattr(self, SERVER_VARNAMES[parname], SERVER_DEFCONFIG[parname])
-
-        self.path = path
-        self.read_config_file()
-        self.validate_config()
-
-
-    def read_config_file(self):
-
-        # There may be exceptions trying to open the file
-        # such as permission denied, or if it's been moved
-        # since we checked for it (unlikely).
-        # I don't want to except Exception but it would
-        # be good to give more useful error messages than
-        # python's defaults.
-        with open(self.path, "r") as f:
-            nline = 1
-            for line in f:
-                line = line.strip()
-
-                # Empty line or comment
-                if line == "" or line.startswith("#"):
-                    continue
-                
-                # Look for the parameter name
-
-                found_param = False
-                for pname in SERVER_PARNAMES:
-                    if line.startswith(pname):
-                        rest = line[len(pname):]
-                        rest = rest.strip()
-                        if rest.startswith("="):
-                            value = rest[1:]
-                            value = value.strip()
-                            setattr(self, SERVER_VARNAMES[pname], value)
-                            found_param = True
-                            break
-                        else:
-                            raise ValueError("Could not find value on line {} of configuration file. Parameter name {} appeared with no equals sign. Rest of line was '{}'".format(nline, pname, rest))
-
-                if not found_param:
-                    raise ValueError("Unknown parameter on line {} of configuration file. Line was '{}'".format(nline, line))
-
-                nline += 1
+class ServerConfig(Config):
 
     def validate_config(self):
         if not validity.is_valid_ipaddr(self.ip_addr):
