@@ -22,15 +22,15 @@ COMMAND_DEFCONFIG = {
 
 # Maps between the parameter name used in the config file
 # and the attribute name used in the Config class
-# In the case of the Nydus Command module, there may be
+# In the case of Nydus Cli, there may be
 # configuration items present in the configuration file
-# which the Command does not need to store. Only data which
+# which the Cli does not need to store. Only data which
 # needs to be stored appears in the VARNAMES dictionary.
 COMMAND_VARNAMES = {
     ALLOCFILE: "alloc_file",
 }
 
-class NydusCommandConfig:
+class NydusCliConfig:
 
     """
     path: a string, path to the configuration file to read
@@ -76,7 +76,7 @@ class NydusCommandConfig:
                 for pname in COMMAND_PARNAMES:
 
                     # Only keep studying the file if the parameter
-                    # name is one the Nydus Command needs to store.
+                    # name is one the Nydus Cli needs to store.
                     if not pname in COMMAND_VARNAMES:
                         continue
 

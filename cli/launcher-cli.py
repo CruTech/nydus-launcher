@@ -3,7 +3,9 @@
 import sys
 import validity
 from allocater import AllocEngine
-from NydusCommandConfig import NydusCommandConfig
+from NydusCliConfig import NydusCliConfig
+
+PROGNAME = "nydus-cli"
 
 VIEW = "view"
 VIEW_UUID = "view-uuid"
@@ -51,19 +53,19 @@ FILE_COMMANDS = [
     CREATE,
 ]
 
-# The Nydus Command module provides a command line tool
+# The Nydus Cli provides a command line tool
 # which you use to interact with the server.
 # Primarily this works by modifying the file containing
 # account allocations.
 
-# Nydus Command reads from the same configuration file
+# Nydus Cli reads from the same configuration file
 # as the Nydus server so that it knows where to find
 # the allocation database file.
 # But it doesn't store everything in the config file
 # since only the location of the allocation file needs
 # to be known.
 
-# Operations supported by Nydus Command:
+# Operations supported by Nydus Cli:
 # - View allocation database; all accounts or search
 #   for specific attributes.
 # - Manually command the allocation of an account to a
@@ -86,23 +88,23 @@ def help():
     exit(0)
 
 def usage():
-    print("Usage: nydus-command <com>")
+    print("Usage: {} <com>".format(PROGNAME))
     print("Valid commands are: {}".format(", ".join(COMMANDS)))
     exit(1)
 
 def ip_user_uuid_usage(command):
     assert command in COMMANDS, "Passed '{}' as a command when it's not in the list of valid commands.".format(command)
-    print("Usage: nydus-command {} <ip address> <username> <uuid>".format(command))
+    print("Usage: {} {} <ip address> <username> <uuid>".format(PROGNAME, command))
     exit(1)
 
 def uuid_usage(command):
     assert command in COMMANDS, "Passed '{}' as a command when it's not in the list of valid commands.".format(command)
-    print("Usage: nydus-command {} <uuid>".format(command))
+    print("Usage: {} {} <uuid>".format(PROGNAME, command))
     exit(1)
 
 def ip_usage(command):
     assert command in COMMANDS, "Passed '{}' as a command when it's not in the list of valid commands.".format(command)
-    print("Usage: nydus-command {} <ip address>".format(command))
+    print("Usage: {} {} <ip address>".format(PROGNAME, command))
     exit(1)
 
 def process_args():
