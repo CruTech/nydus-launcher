@@ -2,6 +2,7 @@
 import requests
 from msal import PublicClientApplication
 from nydus.common.MCAccount import MCAccount
+from nydus.common import validity
 
 # Utilities for authenticating to endpoints over the internet;
 # Microsoft, Xbox, and Minecraft
@@ -47,4 +48,22 @@ MC_UUID_KEY = "id"
 # Keep doing this recursively until you reach the end of the 'PARTS' tuple
 # and you should have the hash.
 XB_HASH_STEPS = (("DisplayClaims", dict), ("xui", dict), (0, list), ("uhs", dict))
+
+def get_tok_xboxlive(access_token):
+    if not validity.is_valid_msal_token(access_token):
+        raise ValueError("A valid MSAL token is needed to get an xboxlive token. Instead, was given {}".format(access_token))
+
+
+    xboxlive_props = {
+        "Properties": {
+            "AuthMethod": "RPS",
+            "SiteName": "user.auth.xboxlive.com",
+            "RpsTicket": "d={}".format(access_token])
+        },
+        "RelyingParty": "http://auth.xboxlive.com",
+        "TokenType": "JWT"
+    }
+
+    xboxlive_resp = requests.post(XBL_URL, json=xboxlive_props, headers=AUTH_HEADERS)
+    xbljson = xboxlive_resp.json()
 

@@ -130,22 +130,44 @@ def is_valid_minecraft_version(vers):
 # and access token, and msal cid
 # Need to know the exact rules.
 def is_valid_minecraft_username(acc):
-    if not isinstance(acc, str):
+    if not is_nonempty_str(acc):
         return False
     return True
 
 def is_valid_minecraft_uuid(uuid):
-    if not isinstance(uuid, str):
+    if not is_nonempty_str(uuid):
         return False
     return True
 
 def is_valid_minecraft_token(token):
-    if not isinstance(token, str):
+    if not is_nonempty_str(token):
         return False
     return True
 
 def is_valid_msal_cid(cid):
-    if not isinstance(token, str):
+    if not is_nonempty_str(cid):
+        return False
+    return True
+
+def is_valid_msal_token(token):
+    if not is_nonempty_str(token):
+        return False
+    return True
+
+def is_valid_xboxlive_token(token):
+    if not is_nonempty_str(token):
+        return False
+    return True
+
+def is_valid_xsts_token(token):
+    if not is_nonempty_str(token):
+        return False
+    return True
+
+def is_nonempty_str(mystr):
+    if not isinstance(mystr, str):
+        return False
+    if len(mystr) == 0:
         return False
     return True
 
