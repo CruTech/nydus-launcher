@@ -375,6 +375,44 @@ def auth_stream(username, app, interactive_allowed=True):
 
 
 """
+username_list: a list of strings, each string being a Microsoft account username (email address)
+app: an MSAL PublicClientApplication which will be used to authenticate the Microsoft
+accounts in the given list.
+interactive_allowed: boolean. If True, this function may trigger browser windows
+    opening so the Microsoft accounts can be authenticated manually. If False,
+    no interactive authentication will be attempted, but in that case the authentication
+    will only be done successfully for accounts already authenticated to MSAL.
+Given a list of strings with each string representing a microsoft username,
+this function attempts to complete the full authentication stream for
+each user in turn.
+Returns a dictionary. The keys of the dictionary are username strings. The value
+for each username is either an AccountAuthTokens instance if the authentication
+was successful, or None if it failed.
+This function catches exceptions thrown by authentication procedures;
+if attempting to authenticate an account causes an exception that authentication
+will be considered failed, and the next account in the list will be attempted.
+"""
+def auth_all(username_list, app, interactive_allowed=True):
+    assert isinstance(username_list, list), "Must pass a list of usernames to auth_all. Instead, a {} was passed.".format(type(username_list))
+    for username in username_list:
+        assert isinstance(username, str), "Expected a list of strings in the username list given to auth_all. Instead, found '{}' of type {}".format(username, type(username))
+
+    assert isinstance(app, PublicClientApplication), "Must pass an MSAL PublicClientApplication to auth_all. Instead, a {} was passed.".format(type(app))
+
+    auth_results = {}
+
+    for username in username_list:
+        try:
+            tokens = auth_stream(username, app, interactive_allowed)
+        except Exception:
+            # Authentication failed somehow
+            tokens = None
+        auth_results[username] = tokens
+
+    return auth_results
+
+
+"""
 client_id: string, an ID for a Microsoft client for MSAL to use
 Creates a new MSAL PublicClientApplication using the provided client
 ID and the default authority URL. This function should only
