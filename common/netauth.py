@@ -4,6 +4,7 @@ from msal import PublicClientApplication
 from nydus.common.MCAccount import MCAccount
 from nydus.common import validity
 from nydus.common.AccessToken import AccessToken
+from nydus.common.MCAccount import MCAccount
 
 # Utilities for authenticating to endpoints over the internet;
 # Microsoft, Xbox, and Minecraft
@@ -26,6 +27,7 @@ AUTH_HEADERS = {
 
 MSAL_TOKEN_KEY = "access_token"
 MSAL_ERROR_KEYS = ("error", "error_description", "correlation_id")
+MSAL_EXPIRES_KEY = "expires_in"
 
 XBL_URL = "https://user.auth.xboxlive.com/user/authenticate"
 # Xbox expiry given as a timestamp
@@ -53,6 +55,7 @@ MC_UUID_KEY = "id"
 # Keep doing this recursively until you reach the end of the 'PARTS' tuple
 # and you should have the hash.
 XB_HASH_STEPS = (("DisplayClaims", dict), ("xui", dict), (0, list), ("uhs", dict))
+
 
 """
 Xbox timestamps are mostly easy to parse with datetime, but end in
@@ -146,7 +149,7 @@ def get_tok_xboxlive(access_token):
         raise ValueError("An AccessToken class must be provided to get_tok_xboxlive. Instead, was given a {}".format(type(access_token)))
 
     if not validity.is_valid_msal_token(access_token.get_token()):
-        raise ValueError("A valid MSAL token is needed to get an xboxlive token. Instead, was given {}".format(access_token))
+        raise ValueError("A valid MSAL token is needed to get an xboxlive token. Instead, was given {}".format(access_token.get_token()))
 
 
     xboxlive_props = {
@@ -189,7 +192,7 @@ def get_tok_xsts(access_token):
         raise ValueError("An AccessToken class must be provided to get_tok_xsts. Instead, was given a {}".format(type(access_token)))
 
     if not validity.is_valid_xboxlive_token(access_token.get_token()):
-        raise ValueError("A valid XboxLive token is needed to get an XSTS token. Instead, was given {}".format(access_token))
+        raise ValueError("A valid XboxLive token is needed to get an XSTS token. Instead, was given {}".format(access_token.get_token()))
 
 
     xsts_props = {
@@ -232,7 +235,7 @@ def get_tok_minecraft(access_token):
         raise ValueError("An AccessToken class must be provided to get_tok_minecraft. Instead, was given a {}".format(type(access_token)))
 
     if not validity.is_valid_xsts_token(access_token.get_token()):
-        raise ValueError("A valid XSTS token is needed to get a Minecraft token. Instead, was given {}".format(access_token))
+        raise ValueError("A valid XSTS token is needed to get a Minecraft token. Instead, was given {}".format(access_token.get_token()))
 
     minecraft_props = {
         "identityToken": "XBL3.0 x={};{}".format(access_token.get_hash(), access_token.get_token())
@@ -259,3 +262,91 @@ def get_tok_minecraft(access_token):
 
     mc_at = AccessToken(mc_access_tok, expiry_dt)
     return mc_at
+
+
+"""
+access_token: an AccessToken object containing a token obtained
+through auth to Minecraft.
+This function returns an MCAccount containing the username, uuid,
+and token from access_token. These are needed for Minecraft launch.
+"""
+def get_minecraft_details(access_token):
+    if not isinstance(access_token, AccessToken):
+        raise ValueError("An AccessToken class must be provided to get_minecraft_details. Instead, was given a {}".format(type(access_token)))
+
+    if not validity.is_valid_minecraft_token(access_token.get_token()):
+        raise ValueError("A valid Minecraft token is needed to get Minecraft user details. Instead, was given {}".format(access_token.get_token()))
+
+    profile_headers = AUTH_HEADERS.copy()
+    profile_headers["Authorization"] = "Bearer {}".format(access_token.get_token())
+
+    profile_resp = requests.get(MC_PROFILE_URL, headers=profile_headers)
+
+    profile_json = profile_resp.json()
+
+    mc_username = profile_json.get(MC_USERNAME_KEY)
+
+    mc_uuid = profile_json.get(MC_UUID_KEY)
+
+    if mc_username == None:
+        raise KeyError("Key {} was missing from Minecraft profile response. Response was {}".format(MC_USERNAME_KEY, profile_json))
+
+    if mc_uuid == None:
+        raise KeyError("Key {} was missing from Minecraft profile response. Response was {}".format(MC_UUID_KEY, profile_json))
+
+    return MCAccount(mc_username, mc_uuid, access_token.get_token())
+
+
+"""
+username: string, a Microsoft account username (email address)
+app: an MSAL PublicClientApplication which will be used to authenticate the Microsoft account
+interactive_allowed: boolean. If True, this function may trigger a browser window to
+    be opened so the Microsoft account can be authenticated manually. If False,
+    this won't be done, but in that case the token can only be successfully obtained
+    if MSAL already has the account authenticated.
+This function acquires an MSAL token used for later authentication to Xbox and Minecraft.
+It returns an AccessToken object containing that token.
+"""
+def get_tok_msal(username, app, interactive_allowed=True):
+    if not validity.is_valid_microsoft_username(username):
+        raise ValueError("Must pass a valid Microsoft username (email address) to get_tok_msal. Was given {}".format(username))
+
+    if not isinstance(app, PublicClientApplication):
+        raise ValueError("Must pass an MSAL PublicClientApplication to get_tok_msal. Got a {}".format(type(app)))
+
+    accounts = app.get_accounts()
+
+    result = None
+
+    if accounts:
+
+        # Using .get so we'll receive None if the key is absent
+        found = [acc for acc in accounts if acc.get("username") == username]
+
+        if found:
+            result = app.acquire_token_silent(SCOPES_NEEDED, account=found[0])
+
+    if not result and interactive_allowed:
+        result = app.acquire_token_interactive(scopes=SCOPES_NEEDED, login_hint=username)
+
+    if not result:
+        raise ValueError("Could not authenticate account through MSAL: {}. Consider enabling interactive authentication.".format(username))
+    if not MSAL_TOKEN_KEY in result:
+        error_msg = ""
+        error_msg = ", ".join([result[key] for key in MSAL_ERROR_KEYS if key in result])
+        raise KeyError("No key {} in MSAL auth response for account {}. Error details: {}".format(MSAL_TOKEN_KEY, username, error_msg))
+
+    token = result[MSAL_TOKEN_KEY]
+
+    if MSAL_EXPIRES_KEY in result:
+        expiry_offset = result[MSAL_EXPIRES_KEY]
+    else:
+        raise KeyError("Key {} was missing from MSAL authentication response. Response was {}".format(MSAL_EXPIRES_KEY, result))
+
+    if validity.is_integer(expiry_offset):
+        expiry_dt = datetime.datetime.now() + datetime.timedelta(seconds = int(expiry_offset))
+    else:
+        raise ValueError("Value of {} from MSAL authentication response should be an integer representing seconds. Instead, was {}".format(MSAL_EXPIRES_KEY, expiry_offset))
+
+    return AccessToken(token, expiry_dt)
+
