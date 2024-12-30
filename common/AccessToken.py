@@ -2,6 +2,9 @@
 import datetime
 from nydus.common import validity
 
+# This class is used to store access tokens along with their expiries
+# Some tokens also come with hashes we need to store; mainly the Xbox ones.
+
 class AccessToken:
 
     """

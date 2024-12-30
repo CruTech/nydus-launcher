@@ -235,7 +235,13 @@ def is_valid_xbox_timestamp(ts):
 # TODO
 # Check list of system users
 def is_valid_system_username(username):
-    if not isinstance(username, str):
+    if not is_nonempty_str(username):
+        return False
+    return True
+
+# TODO what's a valid Microsoft username? An email address?
+def is_valid_microsoft_username(username):
+    if not is_nonempty_str(username):
         return False
     return True
 

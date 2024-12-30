@@ -5,6 +5,7 @@ from nydus.common.MCAccount import MCAccount
 from nydus.common import validity
 from nydus.common.AccessToken import AccessToken
 from nydus.common.MCAccount import MCAccount
+from nydus.common.AccountAuthTokens import AccountAuthTokens
 
 # Utilities for authenticating to endpoints over the internet;
 # Microsoft, Xbox, and Minecraft
@@ -350,3 +351,47 @@ def get_tok_msal(username, app, interactive_allowed=True):
 
     return AccessToken(token, expiry_dt)
 
+"""
+username: string, a Microsoft account username (email address)
+app: an MSAL PublicClientApplication which will be used to authenticate the Microsoft account
+interactive_allowed: boolean. If True, this function may trigger a browser window to
+    be opened so the Microsoft account can be authenticated manually. If False,
+    this won't be done, but in that case the token can only be successfully obtained
+    if MSAL already has the account authenticated.
+Performs the whole authentication stream for Minecraft, beginning with the Microsoft
+username and MSAL client given, proceeding through tokens for MSAL, Xbox Live, XSTS,
+and Minecraft.
+If successful, returns an AccountAuthTokens instance containing all data and tokens
+about the account authenticated.
+"""
+def auth_stream(username, app, interactive_allowed=True):
+    msal_at = get_tok_msal(username, app, interactive_allowed)
+    xbl_at = get_tok_xboxlive(msal_at)
+    xsts_at = get_tok_xsts(xbl_at)
+    minecraft_at = get_tok_minecraft(xsts_at)
+    acc = get_minecraft_details(minecraft_at)
+    aat = AccountAuthTokens(username, msal_at, xbl_at, xsts_at, minecraft_at, acc)
+    return aat
+
+
+"""
+client_id: string, an ID for a Microsoft client for MSAL to use
+Creates a new MSAL PublicClientApplication using the provided client
+ID and the default authority URL. This function should only
+be called once; save the app and reuse it for the rest of your program's life
+(including passing it to other functions such as auth_stream and get_tok_msal)
+since this will allow you to take advantage of already
+authenticated users that the app remembers, reducing the number
+of times you need to manually re-authenticate.
+Returns an MSAL PublicClientApplication.
+"""
+def create_msal_app(client_id):
+    if not validity.is_valid_msal_cid(client_id):
+        raise ValueError("Must provide a valid client ID to create_msal_app. Was given {}".format(client_id))
+
+    app = PublicClientApplication(
+        client_id,
+        authority = AUTHORITY_URL
+    )
+
+    return app
