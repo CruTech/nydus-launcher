@@ -163,7 +163,7 @@ def auth_xsts(xbltok):
     if XB_TOKEN_KEY in xstsjson:
         xststok = xstsjson[XB_TOKEN_KEY]
     else:
-        print("Expected XSTS response to contain {}. Instead we could not get the token, and response was {}".format(XBL_TOKEN_KEY, xbltok))
+        print("Expected XSTS response to contain {}. Instead we could not get the token, and response was {}".format(XB_TOKEN_KEY, xstsjson))
 
     xstshash = get_xbox_hash(xstsjson)
     if xstshash == None:

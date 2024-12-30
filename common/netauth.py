@@ -3,6 +3,7 @@ import requests
 from msal import PublicClientApplication
 from nydus.common.MCAccount import MCAccount
 from nydus.common import validity
+from nydus.common.AccessToken import AccessToken
 
 # Utilities for authenticating to endpoints over the internet;
 # Microsoft, Xbox, and Minecraft
@@ -27,6 +28,7 @@ MSAL_TOKEN_KEY = "access_token"
 MSAL_ERROR_KEYS = ("error", "error_description", "correlation_id")
 
 XBL_URL = "https://user.auth.xboxlive.com/user/authenticate"
+# Xbox expiry given as a timestamp
 XB_EXPIRY_KEY = "NotAfter"
 XB_TOKEN_KEY = "Token"
 
@@ -34,6 +36,8 @@ XSTS_URL = "https://xsts.auth.xboxlive.com/xsts/authorize"
 
 MC_AUTH_URL = "https://api.minecraftservices.com/authentication/login_with_xbox"
 MC_TOKEN_KEY = "access_token"
+# Minecraft expiry given as seconds from now
+MC_EXPIRES_KEY = "expires_in"
 
 MC_PROFILE_URL = "https://api.minecraftservices.com/minecraft/profile"
 MC_USERNAME_KEY = "name"
@@ -85,6 +89,7 @@ def parse_xbox_timestamp(ts):
     xbox_datetime = datetime.datetime.strptime(fixed_ts, validity.XB_EXPIRY_FORMAT)
     return xbox_datetime
 
+
 """
 Both XboxLive authentication and Xbox Security Services (XSTS)
 have the same JSON structure with a hash in the same place
@@ -130,8 +135,17 @@ def get_xbox_hash(xbjson):
     return json_object
 
 
+"""
+access_token: an AccessToken object obtained through MSAL. The caller
+    needs to make sure it's valid and unexpired.
+Returns an AccessToken object containing a token, expiry time, and a hash
+for Xbox Live.
+"""
 def get_tok_xboxlive(access_token):
-    if not validity.is_valid_msal_token(access_token):
+    if not isinstance(access_token, AccessToken):
+        raise ValueError("An AccessToken class must be provided to get_tok_xboxlive. Instead, was given a {}".format(type(access_token)))
+
+    if not validity.is_valid_msal_token(access_token.get_token()):
         raise ValueError("A valid MSAL token is needed to get an xboxlive token. Instead, was given {}".format(access_token))
 
 
@@ -139,7 +153,7 @@ def get_tok_xboxlive(access_token):
         "Properties": {
             "AuthMethod": "RPS",
             "SiteName": "user.auth.xboxlive.com",
-            "RpsTicket": "d={}".format(access_token])
+            "RpsTicket": "d={}".format(access_token.get_token())
         },
         "RelyingParty": "http://auth.xboxlive.com",
         "TokenType": "JWT"
@@ -151,7 +165,97 @@ def get_tok_xboxlive(access_token):
     if XB_TOKEN_KEY in xbljson:
         xbltok = xbljson[XB_TOKEN_KEY]
     else:
-        raise KeyError("Expected XboxLive authentication response to contain {}. Instead we could not get the token, and the response was {}".format(XBL_TOKEN_KEY, xbltok))
+        raise KeyError("Expected XboxLive authentication response to contain {}. Instead we could not get the token, and the response was {}".format(XB_TOKEN_KEY, xbljson))
 
     xblhash = get_xbox_hash(xbljson)
+    
+    if XB_EXPIRY_KEY in xbljson:
+        xblexpiry = parse_xbox_timestamp(xbljson[XB_EXPIRY_KEY])
+    else:
+        raise KeyError("Expected XboxLive authentication response to contain {}. Instead we could not get the timestamp, and the response was {}".format(XB_EXPIRY_KEY, xbljson))
 
+    xbl_at = AccessToken(xbltok, xblexpiry, tokhash=xblhash)
+    return xbl_at
+
+
+"""
+access_token: an AccessToken object obtained through auth to XboxLive. The caller
+    needs to make sure it's valid and unexpired.
+Returns an AccessToken object containing a token, expiry time, and a hash
+for XSTS.
+"""
+def get_tok_xsts(access_token):
+    if not isinstance(access_token, AccessToken):
+        raise ValueError("An AccessToken class must be provided to get_tok_xsts. Instead, was given a {}".format(type(access_token)))
+
+    if not validity.is_valid_xboxlive_token(access_token.get_token()):
+        raise ValueError("A valid XboxLive token is needed to get an XSTS token. Instead, was given {}".format(access_token))
+
+
+    xsts_props = {
+        "Properties": {
+            "SandboxId": "RETAIL",
+            "UserTokens": [
+                access_token.get_token()
+            ]
+        },
+        "RelyingParty": "rp://api.minecraftservices.com/",
+        "TokenType": "JWT"
+    }
+
+    xsts_resp = requests.post(XSTS_URL, json=xsts_props, headers=AUTH_HEADERS)
+    xstsjson = xsts_resp.json()
+
+    if XB_TOKEN_KEY in xstsjson:
+        xststok = xstsjson[XB_TOKEN_KEY]
+    else:
+        raise KeyError("Expected XSTS authentication response to contain {}. Instead we could not get the token, and the response was {}".format(XB_TOKEN_KEY, xstsjson))
+
+    xstshash = get_xbox_hash(xstsjson)
+    
+    if XB_EXPIRY_KEY in xstsjson:
+        xstsexpiry = parse_xbox_timestamp(xstsjson[XB_EXPIRY_KEY])
+    else:
+        raise KeyError("Expected XSTS authentication response to contain {}. Instead we could not get the timestamp, and the response was {}".format(XB_EXPIRY_KEY, xstsjson))
+
+    xsts_at = AccessToken(xststok, xstsexpiry, tokhash=xstshash)
+    return xsts_at
+
+
+"""
+access_token: an AccessToken object obtained through auth to XSTS. The caller
+    needs to make sure it's valid and unexpired.
+Returns an AccessToken object containing a token and expiry time for Minecraft.
+"""
+def get_tok_minecraft(access_token):
+    if not isinstance(access_token, AccessToken):
+        raise ValueError("An AccessToken class must be provided to get_tok_minecraft. Instead, was given a {}".format(type(access_token)))
+
+    if not validity.is_valid_xsts_token(access_token.get_token()):
+        raise ValueError("A valid XSTS token is needed to get a Minecraft token. Instead, was given {}".format(access_token))
+
+    minecraft_props = {
+        "identityToken": "XBL3.0 x={};{}".format(access_token.get_hash(), access_token.get_token())
+    }
+
+    minecraft_resp = requests.post(MC_AUTH_URL,
+            json=minecraft_props, headers=AUTH_HEADERS)
+    mc_json = minecraft_resp.json()
+
+    if MC_TOKEN_KEY in mc_json:
+        mc_access_tok = mc_json[MC_TOKEN_KEY]
+    else:
+        raise KeyError("Key {} was missing from Minecraft authentication response. Response was {}".format(MC_TOKEN_KEY, mc_json))
+
+    if MC_EXPIRES_KEY in mc_json:
+        mc_expiry_offset = mc_json[MC_EXPIRES_KEY]
+    else:
+        raise KeyError("Key {} was missing from Minecraft authentication response. Response was {}".format(MC_EXPIRES_KEY, mc_json))
+
+    if validity.is_integer(mc_expiry_offset):
+        expiry_dt = datetime.datetime.now() + datetime.timedelta(seconds = int(mc_expiry_offset))
+    else:
+        raise ValueError("Value of {} from Minecraft authentication response should be an integer representing seconds. Instead, was {}".format(MC_EXPIRES_KEY, mc_expiry_offset))
+
+    mc_at = AccessToken(mc_access_tok, expiry_dt)
+    return mc_at
