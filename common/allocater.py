@@ -3,6 +3,9 @@
 import datetime
 import os
 from nydus.common.validity import TIME_FORMAT
+from nydus.common.MCAccount import MCAccount
+from nydus.common.AccessToken import AccessToken
+from nydus.common.AccountAuthTokens import AccountAuthTokens
 
 # Decides which account to give to a client requesting an account.
 # Stores the currently allocated accounts in a file.
@@ -66,18 +69,22 @@ ALLOC_DELIM = ","
 # it will be deleted
 ALLOC_TIMEOUT = datetime.timedelta(hours=2)
 
-# How long an access token should be kept
-# before getting a new one.
-TOKEN_TIMEOUT = datetime.timedelta(hours=12)
-
 FIELDS = [
     "client_ip",
     "client_username",
     "alloc_time",
+    "ms_username",
+    "msal_token",
+    "msal_expiry",
+    "xboxlive_token",
+    "xboxlive_expiry",
+    "xsts_token",
+    "xsts_expiry",
+    "xsts_hash",
+    "mc_token",
+    "mc_expiry",
     "mc_username",
     "mc_uuid",
-    "mc_token",
-    "token_time"
 ]
 
 """
@@ -88,19 +95,71 @@ datetime objects, but you should pass a string, not a datetime,
 to the constructor for those fields.
 """
 class AllocAccount:
+
+    """
+    Constructor accepts all the fields individually.
+    It's intended to receive data direct from the allocation file.
+    Order of parameters to constructor must be same as order of
+    parameters in allocation file.
+    If you've independently created an AccountAuthTokens instance
+    and want to use that directly, call the class method
+    AllocAccount.create_from_aat()
+    """
     def __init__(self, client_ip, client_username, alloc_time,
-            mc_username, mc_uuid, mc_token, token_time):
+            ms_username, msal_token, msal_expiry, xboxlive_token,
+            xboxlive_expiry, xsts_token, xsts_expiry, xsts_hash,
+            mc_token, mc_expiry, mc_username, mc_uuid):
 
         self.set_client_ip(client_ip)
         self.set_client_username(client_username)
         self.set_alloc_time(alloc_time)
-        self.set_mc_username(mc_username)
-        self.set_mc_uuid(mc_uuid)
-        self.set_mc_token(mc_token)
-        self.set_token_time(token_time)
+
+        msal_at = AccessToken(msal_token, msal_expiry)
+        xbl_at = AccessToken(xboxlive_token, xboxlive_expiry)
+        xsts_at = AccessToken(xsts_token, xsts_expiry, xsts_hash)
+        mc_at = AccessToken(mc_token, mc_expiry)
+        mc_acc = MCAccount(mc_username, mc_uuid, mc_token)
+        aat = AccountAuthTokens(ms_username, msal_at, xbl_at, xsts_at, mc_at, mc_acc)
+
+        self.set_account_auth_tokens(aat)
+
 
     def num_fields():
         return len(FIELDS)
+
+    """
+    Creates a new AllocAccount with the data you've passed it.
+    In particular, it accepts a finished AccountAuthTokens instance
+    rather than requiring all data points individually as the
+    constructor does.
+    Mainly for use when all users are newly authenticated and
+    the allocation file is being created for the first time.
+    Note that even though you pass in an AccountAuthTokens,
+    a new one will be created due to the nature of the AllocAccount
+    constructor which is called internally.
+    """
+    def create_from_aat(client_ip, client_username, alloc_time, aat):
+
+        if not isinstance(aat, AccountAuthTokens):
+            raise TypeError("To create an AllocAccount using AccountAuthTokens, an AccountAuthTokens instance must be provided. Instead, {} was given.".format(type(aat)))
+
+        return AllocAccount(
+            client_ip,
+            client_username,
+            alloc_time,
+            aat.get_microsoft_username(),
+            aat.get_msal_token().get_token(),
+            aat.get_msal_token().get_expiry(),
+            aat.get_xboxlive_token().get_token(),
+            aat.get_xboxlive_token().get_expiry(),
+            aat.get_xsts_token().get_token(),
+            aat.get_xsts_token().get_expiry(),
+            aat.get_xsts_token().get_hash(),
+            aat.get_minecraft_token().get_token(),
+            aat.get_minecraft_token().get_expiry(),
+            aat.get_minecraft_account().get_username(),
+            aat.get_minecraft_account().get_uuid(),
+        )
 
     """
     Creates the header line to go in the top of the allocation
@@ -113,12 +172,9 @@ class AllocAccount:
     def copy(self):
         return AllocAccount(
             self.get_client_ip(),
-            self.get_client_username()
-            self.get_alloc_time()
-            self.get_mc_username()
-            self.get_mc_uuid()
-            self.get_mc_token()
-            self.get_token_time()
+            self.get_client_username(),
+            self.get_alloc_time(),
+            self.get_account_auth_tokens().copy(),
         )
 
     """
@@ -128,7 +184,7 @@ class AllocAccount:
     process broke somehow.
     """
     def is_allocated(self):
-        if client_ip and client_username and alloc_time:
+        if self.client_ip and self.client_username and self.alloc_time:
             return True
         return False
 
@@ -144,31 +200,44 @@ class AllocAccount:
         self.set_client_username("")
         self.set_alloc_time("")
 
-    """
-    This method only renews the username, uuid, token, and
-    'last renewed' timestamp as given to it.. The procedure of actually
-    legitimately acquiring a new token has to be handled elsewhere.
-    """
-    def renew(self, new_username, new_uuid, new_token):
-        now = datetime.datetime.now()
-        now_str = now.strftime(TIME_FORMAT)
-        self.set_mc_username(new_username)
-        self.set_mc_uuid(new_uuid)
-        self.set_mc_token(new_token)
-        self.set_token_time(now_str)
+    # Type checks for the 'update' methods
+    # occur inside the AccountAuthTokens method where applicable
+    # Use the 'update' methods to replace tokens when one
+    # has been renewed.
 
-    def past_alloc_timeout(self):
+    def update_msal_token(self, new_msal_token):
+        self.aat.set_msal_token(new_msal_token)
+
+    def update_xboxlive_token(self, new_xbl_token):
+        self.aat.set_xboxlive_token(new_xbl_token)
+
+    def update_xsts_token(self, new_xsts_token):
+        self.aat.set_xsts_token(new_xsts_token)
+
+    def update_minecraft_token(self, new_mc_token):
+        self.aat.set_minecraft_token(new_mc_token)
+
+    def update_minecraft_account(self, new_mc_account):
+        self.aat.set_minecraft_account(new_mc_account)
+
+    def alloc_expired(self):
         now = datetime.datetime.now()
         if now - self.get_alloc_timeout() > ALLOC_TIMEOUT:
             return True
         return False
 
-    def past_token_timeout(self):
-        now = datetime.datetime.now()
-        if now - self.get_token_timeout() > TOKEN_TIMEOUT:
-            return True
-        return False
-    
+    def msal_expired(self):
+        return self.aat.get_msal_token().is_expired()
+
+    def xboxlive_expired(self):
+        return self.aat.get_xboxlive_token().is_expired()
+
+    def xsts_expired(self):
+        return self.aat.get_xsts_token().is_expired()
+
+    def minecraft_expired(self):
+        return self.aat.get_minecraft_token().is_expired()
+
     def set_client_ip(self, client_ip):
         if validator.is_valid_ipaddr(client_ip):
             self.client_ip = client_ip
@@ -187,29 +256,11 @@ class AllocAccount:
         else:
             raise ValueError("Alloc time value is not a valid timestamp: {}".format(alloc_time))
 
-    def set_mc_username(self, mc_username):
-        if validator.is_valid_minecraft_username(mc_username):
-            self.mc_username = mc_username
+    def set_account_auth_tokens(self, aat):
+        if isinstance(aat, AccountAuthTokens):
+            self.aat = aat
         else:
-            raise ValueError("Minecraft username value is not a valid minecraft username: {}".format(mc_username))
-
-    def set_mc_uuid(self, mc_uuid):
-        if validator.is_valid_minecraft_uuid(mc_uuid):
-            self.mc_uuid = mc_uuid
-        else:
-            raise ValueError("Minecraft uuid value is not a valid minecraft uuid: {}".format(mc_uuid))
-
-    def set_mc_token(self, mc_token):
-        if validator.is_valid_minecraft_token(mc_token):
-            self.mc_token = mc_token
-        else:
-            raise ValueError("Minecraft token value is not a valid minecraft token: {}".format(mc_token))
-
-    def set_token_time(self, token_time):
-        if validate.is_valid_str_timestamp(token_time):
-            self.token_time = datetime.datetime.strptime(token_time, TIME_FORMAT)
-        else:
-            raise ValueError("Token renewal time value is not a valid timestamp: {}".format(token_time))
+            raise TypeError("Object given is not an AccountAuthTokens class: {}".format(aat))
 
     def get_client_ip(self):
         return self.client_ip
@@ -220,17 +271,56 @@ class AllocAccount:
     def get_alloc_time(self):
         return self.alloc_time
 
+    def get_account_auth_tokens(self):
+        return self.aat
+
+    def get_ms_username(self):
+        return self.aat.get_ms_username()
+
+    """
+    Specifically the token string, not the AccessToken object
+    """
+    def get_msal_token(self):
+        return self.aat.get_msal_token().get_token()
+
+    def get_msal_expiry(self):
+        return self.aat.get_msal_token().get_expiry()
+
+    """
+    Specifically the token string, not the AccessToken object
+    """
+    def get_xboxlive_token(self):
+        return self.aat.get_xboxlive_token().get_token()
+
+    def get_xboxlive_expiry(self):
+        return self.aat.get_xboxlive_token().get_expiry()
+
+    """
+    Specifically the token string, not the AccessToken object
+    """
+    def get_xsts_token(self):
+        return self.aat.get_xsts_token().get_token()
+
+    def get_xsts_expiry(self):
+        return self.aat.get_xsts_token().get_expiry()
+
+    def get_xsts_hash(self):
+        return self.aat.get_xsts_token().get_hash()
+
+    """
+    Specifically the token string, not the AccessToken object
+    """
+    def get_mc_token(self):
+        return self.aat.get_minecraft_token().get_token()
+
+    def get_mc_expiry(self):
+        return self.aat.get_minecraft_token().get_expiry()
+
     def get_mc_username(self):
-        return self.mc_username
+        return self.aat.get_minecraft_account().get_username()
 
     def get_mc_uuid(self):
-        return self.mc_uuid
-
-    def get_mc_token(self):
-        return self.mc_token
-
-    def get_token_time(self):
-        return self.token_time
+        return self.aat.get_minecraft_account().get_uuid()
 
     """
     Creates a line of data, suitable for writing back into
@@ -242,11 +332,20 @@ class AllocAccount:
             self.get_client_ip(),
             self.get_client_username(),
             self.get_alloc_time(),
+            self.get_ms_username(),
+            self.get_msal_token(),
+            self.get_msal_expiry(),
+            self.get_xboxlive_token(),
+            self.get_xboxlive_expiry(),
+            self.get_xsts_token(),
+            self.get_xsts_expiry(),
+            self.get_mc_token(),
+            self.get_mc_expiry(),
             self.get_mc_username(),
             self.get_mc_uuid(),
-            self.get_mc_token(),
-            self.get_token_time(),
         ]
+
+        assert len(fields) == self.num_fields()
         return ALLOC_DELIM.join(fields)
 
 """
@@ -305,7 +404,7 @@ class AllocEngine:
         if not validity.is_valid_ipaddr(client_ip):
             raise ValueError("Not a valid IP address: {}".format(client_ip))
 
-        to_view = [acc for acc in self.accounts if acc.get_mc_uuid() == uuid]
+        to_view = [acc for acc in self.accounts if acc.get_client_ip() == client_ip]
         return AllocEngine.list_to_string(to_view)
 
     def write_changes(self):

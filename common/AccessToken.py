@@ -54,3 +54,6 @@ class AccessToken:
             return True
 
         return False
+    
+    def copy(self):
+        return AccessToken(self.token, self.expire_time, self.tokhash)

@@ -19,3 +19,6 @@ class MCAccount:
 
     def get_token(self):
         return self.token
+
+    def copy(self):
+        return MCAccount(self.username, self.uuid, self.token)

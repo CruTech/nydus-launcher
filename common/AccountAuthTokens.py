@@ -74,3 +74,44 @@ class AccountAuthTokens
 
     def get_minecraft_account(self):
         return self.mc_account
+
+    def set_microsoft_username(self, ms_username):
+        if not validity.is_valid_microsoft_username(ms_username):
+            raise ValueError("AccountAuthTokens.set_microsoft_username must be given a valid Microsoft username. Was given {}".format(ms_username))
+
+        self.ms_username = ms_username
+
+    def set_msal_token(self, msal_token):
+        if not isinstance(msal_token, AccessToken):
+            raise TypeError("AccountAuthTokens.set_msal_token must be given an AccessToken instance. Was given a {}".format(type(msal_token)))
+        self.msal_token = msal_token
+
+    def set_xboxlive_token(self, xbl_token):
+        if not isinstance(xbl_token, AccessToken):
+            raise TypeError("AccountAuthTokens.set_xboxlive_token must be given an AccessToken instance. Was given a {}".format(type(xbl_token)))
+        self.xbl_token = xbl_token
+
+    def set_xsts_token(self, xsts_token):
+        if not isinstance(xsts_token, AccessToken):
+            raise TypeError("AccountAuthTokens.set_xsts_token must be given an AccessToken instance. Was given a {}".format(type(xsts_token)))
+        self.xsts_token = xsts_token
+
+    def set_minecraft_token(self, minecraft_token):
+        if not isinstance(minecraft_token, AccessToken):
+            raise TypeError("AccountAuthTokens.set_minecraft_token must be given an AccessToken instance. Was given a {}".format(type(minecraft_token)))
+        self.mc_token = minecraft_token
+
+    def set_minecraft_account(self, mc_account):
+        if not isinstance(mc_account, MCAccount):
+            raise TypeError("AccountAuthTokens.set_minecraft_account must be given an MCAccount instance. Was given a {}".format(type(mc_account)))
+        self.mc_account = mc_account
+
+    def copy(self):
+        return AccountAuthTokens(
+            self.ms_username,
+            self.msal_token.copy(),
+            self.xbl_token.copy(),
+            self.xsts_token.copy(),
+            self.mc_token.copy(),
+            self.mc_account.copy()
+        )
