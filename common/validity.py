@@ -8,6 +8,10 @@ PORT_MIN = 0
 PORT_MAX = 2**16 - 1
 MC_VERSION_PARTS = 3
 TIME_FORMAT = "%d-%m-%Y %H:%M:%S"
+XB_EXPIRY_SECONDS_FORMAT = "%Y-%m-%dT%H:%M:%S"
+XB_EXPIRY_FORMAT = XB_EXPIRY_SECONDS_FORMAT + "%fZ"
+XB_EXPIRY_SUFFIX = "Z"
+XB_EXPIRY_SEPARATER = "."
 
 """
 Returns True if
@@ -176,15 +180,56 @@ This function validates that a given string
 is in the correct form to represent a timestamp,
 not that the given item is itself a datetime
 object.
+This is in reference to the standard timestamp
+format used internally in nydus launcher code,
+not the timestamp formats used by external entities
+the nydus launcher interacts with.
 """
 def is_valid_str_timestamp(ts):
-    if not isinstance(ts, str):
+    if not is_nonempty_str(ts):
         return False
 
     try:
         dt = datetime.datetime.strptime(ts, TIME_FORMAT)
     except ValueError:
         return False
+    return True
+
+"""
+This function validates that a given string
+is in the format used by Xbox authentication
+endpoints to represent a timestamp (mainly
+used for token expiry timestamps).
+The format includes a fractional part for
+seconds which may be 6 or 7 digits, and
+therefore is not easily parsed by datetime.
+"""
+def is_valid_xbox_timestamp(ts):
+    if not is_nonempty_str(ts):
+        return False
+    
+    parts = ts.split(XB_EXPIRY_SEPARATER)
+    if not (len(parts) == len(XB_EXPIRY_FORMAT.split(XB_EXPIRY_SEPARATER)) == 2):
+        return False
+    
+    seconds_part = parts[0]
+    fractional_part = parts[1]
+
+    try:
+        datetime.datetime.strptime(seconds_part, XB_EXPIRY_SECONDS_FORMAT)
+    except ValueError:
+        return False
+
+    if not fractional_part.endswith(XB_EXPIRY_SUFFIX):
+        return False
+
+    fractional_part = fractional_part.rstrip(XB_EXPIRY_SUFFIX)
+    if len(fractional_part) < 6 or len(fractional_part) > 7:
+        return False
+
+    if not fractional_part.is_decimal():
+        return False
+
     return True
 
 # TODO

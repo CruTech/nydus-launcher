@@ -2,6 +2,7 @@
 
 import datetime
 import os
+from nydus.common.validity import TIME_FORMAT
 
 # Decides which account to give to a client requesting an account.
 # Stores the currently allocated accounts in a file.
@@ -68,8 +69,6 @@ ALLOC_TIMEOUT = datetime.timedelta(hours=2)
 # How long an access token should be kept
 # before getting a new one.
 TOKEN_TIMEOUT = datetime.timedelta(hours=12)
-
-TIME_FORMAT = "%d-%m-%Y %H:%M:%S"
 
 FIELDS = [
     "client_ip",
