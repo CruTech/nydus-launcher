@@ -10,9 +10,20 @@ PORT = "Port"
 CERTFILE = "CertFile"
 CERTPRIVKEY = "CertPrivKey"
 MCVERSION = "McVersion"
-MSALCID = "MSALClientID"
+MSALCID = "MSALClientId"
 ALLOCFILE = "AllocFile"
-SERVER_PARNAMES = [IPADDR, PORT, CERTFILE, CERTPRIVKEY, MCVERSION]
+ACCOUNTSFILE = "AccountsFile"
+SERVER_PARNAMES = [
+    IPADDR, 
+    PORT,
+    CERTFILE,
+    CERTPRIVKEY,
+    MCVERSION,
+    MSALCID,
+    ALLOCFILE,
+    ACCOUNTSFILE
+]
+
 SERVER_DEFCONFIG = {
     IPADDR: "192.168.1.1",
     PORT: "2011",
@@ -21,6 +32,7 @@ SERVER_DEFCONFIG = {
     MCVERSION: "1.20.6",
     MSALCID: "1ab23456-7890-1c2d-e3fg-45h6789ijk01",
     ALLOCFILE: "nydus-alloc.csv"
+    ACCOUNTSFILE: "ms-usernames.txt"
 }
 
 # Maps between the parameter name used in the config file
@@ -33,6 +45,7 @@ SERVER_VARNAMES = {
     MCVERSION: "mc_version",
     MSALCID: "msal_cid",
     ALLOCFILE: "alloc_file",
+    ACCOUNTSFILE: "accounts_file"
 }
 
 class ServerConfig(Config):
@@ -62,6 +75,9 @@ class ServerConfig(Config):
         if not validity.is_valid_file(self.alloc_file):
             raise ValueError("Value for {} is not a file, cannot be found, or cannot be read: {}".format(ALLOCFILE, self.alloc_file))
 
+        if not validity.is_valid_file(self.accounts_file):
+            raise ValueError("Value for {} is not a file, cannot be found, or cannot be read: {}".format(ACCOUNTSFILE, self.accounts_file))
+
     def get_ip_addr(self):
         return self.ip_addr
 
@@ -82,3 +98,6 @@ class ServerConfig(Config):
 
     def get_alloc_file(self):
         return self.alloc_file
+
+    def get_accounts_file(self):
+        return self.accounts_file
