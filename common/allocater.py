@@ -137,6 +137,9 @@ class AllocAccount:
     Note that even though you pass in an AccountAuthTokens,
     a new one will be created due to the nature of the AllocAccount
     constructor which is called internally.
+    Remember client_ip, client_username, and alloc_time can be empty
+    strings, and they should be if the database file is being created
+    from scratch.
     """
     def create_from_aat(client_ip, client_username, alloc_time, aat):
 
@@ -359,6 +362,12 @@ of its methods to do one of the operations.
 """
 class AllocEngine:
 
+    """
+    When creating the alloc db file for the first time, leave it empty and
+    AllocEngine won't read any data out of it.
+    Then call the create_db method to set up the accounts and write the data
+    into the file.
+    """
     def __init__(self, path):
         if not isinstance(path, str):
             raise TypeError("Path to accounts database file must be a string. Was {}".format(path))
@@ -516,3 +525,55 @@ class AllocEngine:
             acc.allocate(client_ip, client_username)
 
         self.write_changes()
+
+    """
+    aat_list: a list of AccountAuthTokens instances.
+    This method is intended to be called when no accounts were
+    present in the allocation db file (it will raise an Exception
+    if accounts were found). It will create an
+    entry for each of the AccountAuthTokens instances given,
+    and write them all into the file.
+    """
+    def create_db(self, aat_list):
+        if not isinstance(aat_list, list):
+            raise TypeError("Must pass a list to create_db method. Instead, got a {}".format(type(aat_list)))
+
+        for elem in aat_list:
+            if not isinstance(elem, AccountAuthTokens):
+                raise TypeError("The aat list given to create_db must contain only AccountAuthTokens, but found a {}".format(type(elem)))
+
+        if len(self.accounts) > 0:
+            raise ValueError("create_db is intended to be called when no accounts were found in the allocation db file, but AllocEngine found {} accounts".format(len(self.accounts)))
+
+        for aat in aat_list:
+            self.accounts.append(AllocAccount.create_from_aat("", "", "", aat))
+
+        self.write_changes()
+
+
+    """
+    aat_list: a list of AccountAuthTokens instances
+    This method is similar to create_db, but functions when accounts
+    were found in the allocation db file. It will create a new
+    allocation db entry for each account represented by the AccountAuthTokens
+    instances given, and append those to the existing ones from
+    the db file, then write the whole resulting account set back
+    into the file.
+    This method is intended for situations when authenticating some
+    accounts fails initially so the alloc db file is created without
+    them, but they are successfully authenticated later and need
+    to be added to the roster of available accounts.
+    """
+    def extend_db(self, aat_list):
+        if not isinstance(aat_list, list):
+            raise TypeError("Must pass a list to extend_db method. Instead, got a {}".format(type(aat_list)))
+
+        for elem in aat_list:
+            if not isinstance(elem, AccountAuthTokens):
+                raise TypeError("The aat list given to extend_db must contain only AccountAuthTokens, but found a {}".format(type(elem)))
+
+        for aat in aat_list:
+            self.accounts.append(AllocAccount.create_from_aat("", "", "", aat))
+
+        self.write_changes()
+
