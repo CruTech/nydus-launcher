@@ -7,6 +7,8 @@ import datetime
 import threading
 from nydus.common.allocater import AllocEngine
 from nydus.server import ServerConfig
+from nydus.common import validity
+from nydus.common import netauth
 
 # The lock which controls access to the account allocation file
 ALLOCDB_LOCK = threading.Lock()
@@ -141,11 +143,55 @@ def client_exchange(cfg, conn, addr):
 
     conn.close()
 
+"""
+Takes in path to file which should have the list of Microsoft accounts
+we want to use inside it. Each line of the file should be one Microsoft
+account username, and should contain no whitespace.
+Returns a list of strings, each string being one of the usernames.
+"""
+def read_accounts_file(path):
+    ms_usernames = []
+    with open(path, "r") as f:
+        for line in f:
+            line = line.rstrip("\n")
+            if len(line.split()) != 1:
+                raise ValueError("Each line of the accounts file should be a single Microsoft username, but found a line containing whitespace. The file: {}. The line: {}".format(path, line))
+
+            if not validity.is_valid_microsoft_username(line):
+                raise ValueError("This line in the accounts file was not a valid Microsoft username: {}".format(line))
+            ms_usernames.append(line)
+    return ms_usernames
+
+
+"""
+cfg: the ServerConfig instance for use on this server
+app: the MSAL PublicClientApplication this server will use in authentication
+Gets Microsoft usernames out of the accounts file, attempts to authenticate them,
+(interactively; the user needs to manully log accounts in when the server starts)
+creates the allocation db file using the accounts which authd successfully.
+Returns nothing
+"""
+def initialise_accounts(cfg, app):
+    username_list = read_accounts_file(cfg.get_accounts_file())
+    auth_dict = netauth.auth_all(username_list, app, interactive_allowed=True)
+    authed_aats = [aat for aat in auth_dict.values() if aat != None]
+    failed_aats = [aat for aat in auth_dict.values() if aat == None]
+    print("From {} requested Microsoft accounts, the following {} were authenticated.".format(len(username_list), len(authed_aats)))
+    for aat in authed_aats:
+        print(aat.get_microsoft_username())
+
+    print("The following {} failed authentication.".format(len(failed_aats)))
+    for aat in failed_aats:
+        print(aat.get_microsoft_username())
+
+    alloc_engine = AllocEngine(cfg.get_alloc_file())
+    alloc_engine.create_db(authed_aats)
+
 def startup():
     cfg = ServerConfig()
     return cfg
 
-def server_main(cfg):
+def server_main(cfg, app):
     context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
 
     # Error to handle: what if cert file and cert key can't be found/files don't exist/permission denied?
@@ -166,6 +212,8 @@ def server_main(cfg):
 
 def main():
     cfg = startup()
-    server_main(cfg)
+    app = netauth.create_msal_app(cfg.get_msal_cid())
+    initialise_accounts(cfg, app)
+    server_main(cfg, app)
 
 main()
