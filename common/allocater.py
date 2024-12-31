@@ -238,20 +238,22 @@ class AllocAccount:
     def minecraft_expired(self):
         return self.aat.get_minecraft_token().is_expired()
 
+    # We must allow empty string for client_ip, client_username, and
+    # alloc time as empty strings for them indicate an unallocated account
     def set_client_ip(self, client_ip):
-        if validator.is_valid_ipaddr(client_ip):
+        if client_ip == "" or validator.is_valid_ipaddr(client_ip):
             self.client_ip = client_ip
         else:
             raise ValueError("Client IP value is not a valid IP address: {}".format(client_ip))
 
     def set_client_username(self, client_username):
-        if validator.is_valid_system_username(client_username):
+        if client_username == "" or validator.is_valid_system_username(client_username):
             self.client_username = client_username
         else:
             raise ValueError("Client username value is not a valid system username: {}".format(client_username))
 
     def set_alloc_time(self, alloc_time):
-        if validator.is_valid_str_timestamp(alloc_time):
+        if alloc_time == "" or validator.is_valid_str_timestamp(alloc_time):
             self.alloc_time = datetime.datetime.strptime(alloc_time, TIME_FORMAT)
         else:
             raise ValueError("Alloc time value is not a valid timestamp: {}".format(alloc_time))
