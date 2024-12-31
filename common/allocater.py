@@ -223,10 +223,16 @@ class AllocAccount:
     def update_minecraft_account(self, new_mc_account):
         self.aat.set_minecraft_account(new_mc_account)
 
+    """
+    Returns True if the account is allocated and has been allocated
+    for longer than the alloc timeout.
+    Otherwise, return False (including if the account is not allocated)
+    """
     def alloc_expired(self):
         now = datetime.datetime.now()
-        if now - self.get_alloc_timeout() > ALLOC_TIMEOUT:
-            return True
+        if self.get_alloc_time():
+            if now - self.get_alloc_time() > ALLOC_TIMEOUT:
+                return True
         return False
 
     def msal_expired(self):
@@ -579,4 +585,12 @@ class AllocEngine:
             self.accounts.append(AllocAccount.create_from_aat("", "", "", aat))
 
         self.write_changes()
+
+    """
+    Releases all the accounts which are past their allocation timeout.
+    """
+    def release_expired(self):
+        for acc in self.accounts:
+            if acc.alloc_expired():
+                acc.release()
 

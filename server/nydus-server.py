@@ -61,22 +61,18 @@ the relevant Minecraft account is released.
 """
 def cleanup(cfg, app):
 
-    renew_tokens(cfg, app)
-    release_expired_accounts(cfg)
-    release_unused_accounts(cfg)
+    with ALLOCDB_LOCK:
+        alloc_engine = AllocEngine(cfg.get_alloc_file())
+
+        renew_tokens(cfg, app)
+        alloc_engine.release_expired()
+        release_unused_accounts(cfg)
 
 """
 Looks for access tokens in the alloc db which are close to expiring,
 and renews them.
 """
 def renew_tokens(cfg, app):
-    pass
-
-"""
-Looks for accounts in the alloc db which have been allocated
-for too long, and releases them.
-"""
-def release_expired_accounts(cfg):
     pass
 
 """
