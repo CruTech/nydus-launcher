@@ -37,20 +37,26 @@ class AccessToken:
         return self.expire_time < datetime.datetime.now()
 
     """
-    check_inteval: a timedelta representing how long it will be until
+    check_interval: a timedelta representing how long it will be until
     the next time the token expiry is checked
+    num_intervals: a positive integer, number of check_intervals to look ahead.
     Returns True if the token needs renewal, False otherwise.
-    Token needs renewal if it is currently expired or will be
-    before it is checked again.
+    Token needs renewal if it is currently expired or will expire
+    within the next num_intervals * check_interval
+    We look multiple check intervals ahead so that we've got a buffer
+    if the server happens to be down during the final check interval.
     """
-    def needs_renewal(self, check_interval):
+    def needs_renewal(self, check_interval, num_intervals=2):
         if not isintance(check_interval, datetime.timedelta):
             raise TypeError("check_interval for AccessToken.needs_renewal must be a datetime.timedelta. Was given a {}".format(type(check_interval)))
+
+        if not validity.is_positive_integer(num_intervals):
+            raise ValueError("num_intervals for AccessToken.needs_renewal must be a positive integer. Was {}".format(num_intervals))
 
         if self.is_expired():
             return True
 
-        if datetime.datetime.now() + check_interval > self.get_expiry():
+        if datetime.datetime.now() + (2 * check_interval)  > self.get_expiry():
             return True
 
         return False

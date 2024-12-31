@@ -10,6 +10,13 @@ from nydus.server import ServerConfig
 from nydus.common import validity
 from nydus.common import netauth
 
+# TODO cleanup protocol
+# Check for accounts which should be de-allocated
+# and de-allocate them
+# TODO renewal protocol
+# Periodically check all the tokens for all the accounts
+# and renew them if necessary.
+
 # The lock which controls access to the account allocation file
 ALLOCDB_LOCK = threading.Lock()
 
@@ -32,29 +39,53 @@ MSG_END = "\n"
 
 SRV_TIMEOUT = 5
 
+# 30 minutes in seconds
+RENEWAL_PERIOD = 30 * 60
+RENEWAL_DT = datetime.timedelta(seconds=RENEWAL_PERIOD)
+
 
 # Entry point to the nydus-launcher server.
 # Runs as a daemon which clients connect to.
-# Forks off those connections to allocate accounts.
+# Creates threads to allocate accounts.
 # Periodically cleans up account allocations in case a client didn't release.
 # May also receive commands from the admin on the server.
 
 """
-Generates random strings of given length.
-Strings may contain upper and lower case letters, and numbers
-There will be no symbols
-strlen: int, exact length of string to generate
+The master cleanup function which runs every RENEWAL_PERIOD
+It renews all authentication tokens which are close to expiring.
+It releases all Minecraft account allocations which have passed the
+allocation timeout.
+For accounts which are still allocated, it checks for whether those client
+IPs are still allocated and those system users are still logged in. If not,
+the relevant Minecraft account is released.
 """
-def randomstring(strlen):
-    assert isinstance(strlen, int), "Must specify length of random string as an integer"
-    assert strlen > 0, "strlen of random string must be positive"
-    alpha = "abcdefghijklmnopqrstuvwxyz"
-    number = "1234567890"
+def cleanup(cfg, app):
 
-    allchars = alpha + alpha.upper() + number
+    renew_tokens(cfg, app)
+    release_expired_accounts(cfg)
+    release_unused_accounts(cfg)
 
-    out = "".join([random.choice(allchars) for i in range(strlen)])
-    return out
+"""
+Looks for access tokens in the alloc db which are close to expiring,
+and renews them.
+"""
+def renew_tokens(cfg, app):
+    pass
+
+"""
+Looks for accounts in the alloc db which have been allocated
+for too long, and releases them.
+"""
+def release_expired_accounts(cfg):
+    pass
+
+"""
+Looks for accounts which are allocated to IP addresses/system users
+which aren't in use right now (therefore the Minecraft account
+can't be in use) and releases them.
+"""
+def release_unused_accounts(cfg):
+    pass
 
 def allocate_account(cfg, conn, addr, sys_username):
     # Allocate a Minecraft account to that username
@@ -184,8 +215,16 @@ def initialise_accounts(cfg, app):
     for aat in failed_aats:
         print(aat.get_microsoft_username())
 
+    # This is the one instance where no locking is required
+    # before running the AllocEngine, because no threads
+    # will be spawned until the main server loop is reached.
     alloc_engine = AllocEngine(cfg.get_alloc_file())
-    alloc_engine.create_db(authed_aats)
+
+    # Create a whole new alloc db only if nothing is already
+    # in the file.
+    # Otherwise proceed with the file's contents.
+    if alloc_engine.num_total_accounts() == 0:
+        alloc_engine.create_db(authed_aats)
 
 def startup():
     cfg = ServerConfig()

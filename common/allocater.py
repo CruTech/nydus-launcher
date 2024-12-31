@@ -385,6 +385,9 @@ class AllocEngine:
         self.accounts = []
         self.load_alloc_db()
 
+    def num_total_accounts(self):
+        return len(self.accounts)
+
     def __repr__(self):
         return AllocEngine.list_to_string(self.accounts)
 

@@ -87,7 +87,7 @@ def is_positive_integer(num):
         return False
     num = int(num)
 
-    if num < 0:
+    if num <= 0:
         return False
     return True
 
