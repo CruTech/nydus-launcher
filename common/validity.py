@@ -1,6 +1,7 @@
 
 import os
 import datetime
+import pwd
 
 IP_SEG_MIN = 0
 IP_SEG_MAX = 255
@@ -232,11 +233,16 @@ def is_valid_xbox_timestamp(ts):
 
     return True
 
-# TODO
 # Check list of system users
 def is_valid_system_username(username):
     if not is_nonempty_str(username):
         return False
+    
+    try:
+        pwdentry = pwd.getpwdnam(username)
+    except KeyError:
+        return False
+    
     return True
 
 # TODO what's a valid Microsoft username? An email address?
