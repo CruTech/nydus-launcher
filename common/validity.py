@@ -94,6 +94,21 @@ def is_positive_integer(num):
 
 """
 Given a string, tells you if the string
+represents a non negative integer
+Difference between this and is_positive_integer
+is that this function counts 0 as valid.
+"""
+def is_nonnegative_integer(num):
+    if not is_integer(num):
+        return False
+    num = int(num)
+
+    if num < 0:
+        return False
+    return True
+
+"""
+Given a string, tells you if the string
 represents an integer
 """
 def is_integer(num):
@@ -106,30 +121,72 @@ def is_integer(num):
     return True
 
 """
+Returns True if the given string is of the form
+X or X.Y or X.Y.Z or X.Y.Z.A etc.
+where X, Y, and Z, etc. are non-negative integers.
+num_segments: integer, how many integer elements should be
+    in the version string.
+"""
+def is_valid_version(vers, num_segments):
+    if not isinstance(num_segments, int):
+        raise TypeError("num_segments for is_valid_version must be an integer. Was {}".format(type(num_segments)))
+
+    if not is_positive_integer(num_segments):
+        raise ValueError("num_segments for is_valid_version must be a positive integer. Was {}".format(num_segments))
+
+    if not is_nonempty_str(vers):
+        return False
+
+    parts = vers.split(".")
+    if len(parts) != num_segments:
+        return False
+    
+    for seg in parts:
+        if not is_nonnegative_integer(seg):
+            return False
+    return True
+
+
+"""
 Returns True if the given string is a valid
 Minecraft version. False otherwise.
 TODO
 Requires work.
-The general form of X.Y.Z is easy to test for,
-but there are pre-release versions too, and OptiFine
-is its own kind of Minecraft version.
-We can't just define a valid Minecraft version based
-on the existence of a json file; this function will
-first be used on the server where the json files
-haven't been downloaded.
+The general form of X.Y.Z is easy to test for.
+But we also allow X.Y.Z-string
+and X.Y-string
+because of pre-release versions and OptiFine.
 """
 def is_valid_minecraft_version(vers):
-    if not isinstance(vers, str):
-        return False
-    parts = vers.split(".")
-    if len(parts) != MC_VERSION_PARTS:
+    if not is_nonempty_str(vers):
         return False
     
-    for seg in parts:
-        if not is_positive_integer(seg):
+    dash_parts = vers.split("-")
+    if len(dash_parts) == 1:
+        # No dash in the version.
+        # It's a regular X.Y.Z
+
+        if not is_valid_version(vers, num_segments=MC_VERSION_PARTS):
             return False
+
+    elif len(dash_parts) == 2:
+        # One dash in the version.
+        # The first part should be a normal X.Y or X.Y.Z
+        # The second part some string.
+        if not (is_valid_version(dash_parts[0], num_segments=MC_VERSION_PARTS) or\
+                is_valid_version(dash_parts[0], num_segments=MC_VERSION_PARTS-1)):
+            return False
+
+        if not(is_nonempty_str(dash_parts[1])):
+            return False
+
+    else:
+        # No valid Minecraft version has 2 or more dashes
+        return False
+
     return True
 
+    
 # TODO
 # More precise checks for valid username, uuid,
 # and access token, and msal cid
