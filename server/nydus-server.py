@@ -10,13 +10,7 @@ from nydus.server import ServerConfig
 from nydus.common import validity
 from nydus.common import netauth
 from nydus.common.MCAccount import MCAccount
-
-# TODO cleanup protocol
-# Check for accounts which should be de-allocated
-# and de-allocate them
-# TODO renewal protocol
-# Periodically check all the tokens for all the accounts
-# and renew them if necessary.
+from nydus.server.SSHLogins import SSHLogins
 
 # The lock which controls access to the account allocation file
 ALLOCDB_LOCK = threading.Lock()
@@ -132,7 +126,20 @@ which aren't in use right now (therefore the Minecraft account
 can't be in use) and releases them.
 """
 def release_unused_accounts(cfg):
-    pass
+    logins = SSHLogins()
+    all_accounts = alloc_engine.get_accounts()
+
+    for acc in all_accounts:
+
+        client_username = acc.get_client_username()
+        client_ip = acc.get_client_ip()
+
+        # If the IP address to which the account was allocated
+        # no longer has the user to which the account was allocated
+        # logged in to that machine, then we can release the account
+        sessions = logins.get_specific_sessions(client_username, client_ip)
+        if len(sessions) == 0:
+            acc.release()
 
 def allocate_account(cfg, conn, addr, sys_username):
     # Allocate a Minecraft account to that username

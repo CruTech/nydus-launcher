@@ -239,7 +239,7 @@ def is_valid_system_username(username):
         return False
     
     try:
-        pwdentry = pwd.getpwdnam(username)
+        pwdentry = pwd.getpwnam(username)
     except KeyError:
         return False
     
