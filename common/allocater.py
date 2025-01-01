@@ -247,6 +247,18 @@ class AllocAccount:
     def minecraft_expired(self):
         return self.aat.get_minecraft_token().is_expired()
 
+    def msal_needs_renewal(self, check_interval, num_intervals=2):
+        return self.aat.get_msal_token().needs_renewal(check_interval, num_intervals)
+
+    def xboxlive_needs_renewal(self, check_interval, num_intervals=2):
+        return self.aat.get_msal_token().needs_renewal(check_interval, num_intervals)
+
+    def xsts_needs_renewal(self, check_interval, num_intervals=2):
+        return self.aat.get_msal_token().needs_renewal(check_interval, num_intervals)
+
+    def minecraft_needs_renewal(self, check_interval, num_intervals=2):
+        return self.aat.get_msal_token().needs_renewal(check_interval, num_intervals)
+
     # We must allow empty string for client_ip, client_username, and
     # alloc time as empty strings for them indicate an unallocated account
     def set_client_ip(self, client_ip):
@@ -327,6 +339,21 @@ class AllocAccount:
     def get_mc_expiry(self):
         return self.aat.get_minecraft_token().get_expiry()
 
+    """
+    For these get functions, 'at' stands for 'AccessToken'
+    """
+    def get_msal_at(self):
+        return self.aat.get_msal_token()
+
+    def get_xboxlive_at(self):
+        return self.aat.get_xboxlive_token()
+
+    def get_xsts_at(self):
+        return self.aat.get_xsts_token()
+
+    def get_mc_at(self):
+        return self.aat.get_minecraft_token()
+
     def get_mc_username(self):
         return self.aat.get_minecraft_account().get_username()
 
@@ -396,6 +423,17 @@ class AllocEngine:
 
     def __repr__(self):
         return AllocEngine.list_to_string(self.accounts)
+
+    """
+    Returns the exact account objects, not copies, because this method is
+    used to access the underlying data so that changes can be made like
+    renewing tokens.
+    """
+    def get_accounts(self):
+        return self.accounts
+
+    def get_allocated_accounts(self):
+        return [acc for acc in self.accounts if acc.is_allocated()]
 
     """
     Given a list of AllocAccount objects, creates a string

@@ -41,8 +41,8 @@ MSG_END = "\n"
 SRV_TIMEOUT = 5
 
 # 30 minutes in seconds
-RENEWAL_PERIOD = 30 * 60
-RENEWAL_DT = datetime.timedelta(seconds=RENEWAL_PERIOD)
+CLEANUP_PERIOD = 30 * 60
+CLEANUP_DT = datetime.timedelta(seconds=CLEANUP_PERIOD)
 
 
 # Entry point to the nydus-launcher server.
@@ -86,7 +86,7 @@ def renew_tokens(cfg, app, alloc_engine):
         # authentication fails we still want to try renewing
         # everything else
 
-        if acc.msal_expired():
+        if acc.msal_needs_renewal(CLEANUP_DT):
             ms_username = acc.get_ms_username()
             try:
                 msal_tok = netauth.get_tok_msal(ms_username, app, interactive_allowed=False)
@@ -94,7 +94,7 @@ def renew_tokens(cfg, app, alloc_engine):
             except Exception:
                 pass
 
-        if acc.xboxlive_expired():
+        if acc.xboxlive_needs_renewal(CLEANUP_DT):
             msal_tok = acc.get_msal_at()
             try:
                 xboxlive_tok = netauth.get_tok_xboxlive(msal_tok)
@@ -102,7 +102,7 @@ def renew_tokens(cfg, app, alloc_engine):
             except Exception:
                 pass
 
-        if acc.xsts_expired():
+        if acc.xsts_needs_renewal(CLEANUP_DT):
             xboxlive_tok = acc.get_xboxlive_at()
             try:
                 xsts_tok = netauth.get_tok_xsts(xboxlive_tok)
@@ -110,7 +110,7 @@ def renew_tokens(cfg, app, alloc_engine):
             except Exception:
                 pass
 
-        if acc.minecraft_expired():
+        if acc.minecraft_needs_renewal(CLEANUP_DT):
             xsts_tok = acc.get_xsts_at()
             try:
                 minecraft_tok = netauth.get_tok_minecraft(xsts_tok)
@@ -277,7 +277,7 @@ def startup():
     cfg = ServerConfig()
     return cfg
 
-def server_main(cfg, app):
+def server_listener(cfg):
     context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
 
     # Error to handle: what if cert file and cert key can't be found/files don't exist/permission denied?
@@ -292,9 +292,22 @@ def server_main(cfg, app):
         with context.wrap_socket(sock, server_side=True) as ssock:
             while True:
                 conn, addr = ssock.accept()
-                ct = threading.Thread(target=handle_connection, args=(conn, addr))
+                ct = threading.Thread(target=handle_connection, args=(cfg, conn, addr))
                 ct.start()
 
+
+def server_main(cfg, app):
+
+    # Start the thread which will listen for connections.
+    listen_thread = threading.Thread(target=server_listener, args=(cfg,))
+    listen_thread.start()
+
+    # Every so often trigger a thread to cleanup allocated accounts
+    while True:
+        cleanup_thread = threading.Thread(target=cleanup, args=(cfg, app))
+        cleanup_thread.start()
+        
+        sleep(CLEANUP_PERIOD)
 
 def main():
     cfg = startup()
