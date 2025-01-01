@@ -6,6 +6,7 @@ Utilities needed in multiple Nydus client modules
 import os
 import pwd
 import re
+from nydus.common import validity
 
 """
 Raises OSError if something's wrong with pwd database entry
@@ -97,6 +98,21 @@ def get_minecraft_path():
     if not os.path.isdir(minecraft_path):
         raise OSError("User's Minecraft directory does not exist at {}".format(minecraft_path))
     return minecraft_path
+
+"""
+Returns a string; the path to the json file which gives information
+about all available Minecraft versions, inside the user's .minecraft folder.
+Specifically, this is
+/home/<user>/.minecraft/versions/version_manifest_v2.json
+Raises OSError if it can't be found or can't be read.
+"""
+def get_version_manifest():
+    minecraft_path = get_minecraft_path()
+    manifest = os.path.join(minecraft_path, "versions", "version_manifest_v2.json")
+
+    if not validity.is_valid_file(manifest):
+        raise OSError("User's Minecraft version manifest does not exist or could not be read at {}".format(manifest))
+    return manifest
 
 """
 Python's default lstrip, given a to_strip string of more than one character,
