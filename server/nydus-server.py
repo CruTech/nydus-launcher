@@ -9,6 +9,7 @@ from nydus.common.allocater import AllocEngine
 from nydus.server import ServerConfig
 from nydus.common import validity
 from nydus.common import netauth
+from nydus.common.MCAccount import MCAccount
 
 # TODO cleanup protocol
 # Check for accounts which should be de-allocated
@@ -61,10 +62,15 @@ the relevant Minecraft account is released.
 """
 def cleanup(cfg, app):
 
+    # TODO
+    # Does this lock up the allocations for too long?
+    # Do we need to split this into multiple
+    # separate operations with separate claim/release
+    # on the lock?
     with ALLOCDB_LOCK:
         alloc_engine = AllocEngine(cfg.get_alloc_file())
 
-        renew_tokens(cfg, app)
+        renew_tokens(cfg, app, alloc_engine)
         alloc_engine.release_expired()
         release_unused_accounts(cfg)
 
@@ -72,8 +78,53 @@ def cleanup(cfg, app):
 Looks for access tokens in the alloc db which are close to expiring,
 and renews them.
 """
-def renew_tokens(cfg, app):
-    pass
+def renew_tokens(cfg, app, alloc_engine):
+    all_accounts = alloc_engine.get_accounts()
+    for acc in all_accounts:
+
+        # We try/except everything here because if one
+        # authentication fails we still want to try renewing
+        # everything else
+
+        if acc.msal_expired():
+            ms_username = acc.get_ms_username()
+            try:
+                msal_tok = netauth.get_tok_msal(ms_username, app, interactive_allowed=False)
+                acc.update_msal_token(msal_tok)
+            except Exception:
+                pass
+
+        if acc.xboxlive_expired():
+            msal_tok = acc.get_msal_at()
+            try:
+                xboxlive_tok = netauth.get_tok_xboxlive(msal_tok)
+                acc.update_xboxlive_token(xboxlive_tok)
+            except Exception:
+                pass
+
+        if acc.xsts_expired():
+            xboxlive_tok = acc.get_xboxlive_at()
+            try:
+                xsts_tok = netauth.get_tok_xsts(xboxlive_tok)
+                acc.update_xsts_token(xsts_tok)
+            except Exception:
+                pass
+
+        if acc.minecraft_expired():
+            xsts_tok = acc.get_xsts_at()
+            try:
+                minecraft_tok = netauth.get_tok_minecraft(xsts_tok)
+                acc.update_minecraft_token(minecraft_tok)
+
+                # The minecraft access token is also in MCAccount
+                # so we need to update that too
+                mc_username = acc.get_mc_username()
+                mc_uuid = acc.get_mc_uuid()
+                mc_acc = MCAccount(mc_username, mc_uuid, minecraft_tok.get_token())
+                acc.update_minecraft_account(mc_acc)
+            except Exception:
+                pass
+
 
 """
 Looks for accounts which are allocated to IP addresses/system users
