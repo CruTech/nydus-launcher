@@ -21,7 +21,7 @@ SERVER_PARNAMES = [
     MCVERSION,
     MSALCID,
     ALLOCFILE,
-    ACCOUNTSFILE
+    ACCOUNTSFILE,
 ]
 
 SERVER_DEFCONFIG = {
@@ -31,8 +31,8 @@ SERVER_DEFCONFIG = {
     CERTPRIVKEY: "nydus-server.key",
     MCVERSION: "1.20.6",
     MSALCID: "1ab23456-7890-1c2d-e3fg-45h6789ijk01",
-    ALLOCFILE: "nydus-alloc.csv"
-    ACCOUNTSFILE: "ms-usernames.txt"
+    ALLOCFILE: "nydus-alloc.csv",
+    ACCOUNTSFILE: "ms-usernames.txt",
 }
 
 # Maps between the parameter name used in the config file
@@ -45,7 +45,7 @@ SERVER_VARNAMES = {
     MCVERSION: "mc_version",
     MSALCID: "msal_cid",
     ALLOCFILE: "alloc_file",
-    ACCOUNTSFILE: "accounts_file"
+    ACCOUNTSFILE: "accounts_file",
 }
 
 class ServerConfig(Config):

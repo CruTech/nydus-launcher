@@ -4,6 +4,8 @@ import sys
 from nydus.common import validity
 from nydus.common.allocater import AllocEngine
 from nydus.cli import CliConfig
+from nydus.common import netauth
+from nydus.common import alloc_utils
 
 PROGNAME = "nydus-cli"
 
@@ -31,6 +33,7 @@ COMMANDS = [
 
 SIMPLE_COMMANDS = [
     VIEW,
+    CREATE,
     CLEANUP,
     HELP,
 ]
@@ -47,10 +50,6 @@ IP_COMMANDS = [
 
 IP_USER_UUID_COMMANDS = [
     ALLOC,
-]
-
-FILE_COMMANDS = [
-    CREATE,
 ]
 
 # The Nydus Cli provides a command line tool
@@ -153,6 +152,7 @@ def process_args():
     
     return (command, data)
 
+
 def cli_main(cfg):
 
     command, data = process_args()
@@ -175,10 +175,11 @@ def cli_main(cfg):
     elif command == RELEASE_IP:
         allocengine.release_account_ip(data)
     elif command == CREATE:
-        pass
+        app = netauth.create_msal_app(cfg.get_msal_cid())
+        alloc_utils.create(cfg, app)
     elif command == CLEANUP:
-        # TODO
-        pass
+        app = netauth.create_msal_app(cfg.get_msal_cid())
+        alloc_utils.cleanup(cfg, app)
 
 def startup():
     cfg = CliConfig()
