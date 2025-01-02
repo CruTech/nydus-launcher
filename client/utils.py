@@ -100,6 +100,20 @@ def get_minecraft_path():
     return minecraft_path
 
 """
+Gets path to current user's Minecraft assets folder
+(usually /home/<username>/.minecraft/assets)
+Raises OSError if it can't be found.
+"""
+def get_minecraft_assets_path():
+    mc_path = get_minecraft_path()
+    assets_path = os.path.join(mc_path, "assets")
+
+    if not os.path.isdir(assets_path):
+        raise OSError("User's Minecraft assets directory does not exist at {}".format(assets_path))
+
+    return assets_path
+
+"""
 Returns a string; the path to the json file which gives information
 about all available Minecraft versions, inside the user's .minecraft folder.
 Specifically, this is
