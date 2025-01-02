@@ -38,7 +38,10 @@ TODO everything other than the download, create_path, and verify_file_hash
 functions are easy to write unit tests for and should be tested
 """
 
-MC_MODE = 0o775
+DIR_MODE = 0o775
+FILE_MODE = 0o664
+MAX_MASK = 0o777
+DIR_MASK = MAX_MASK - DIR_MODE
 
 # Downloaded files usually appear inside this directory under .minecraft
 MC_DOWNLOAD_DIR = "libraries"
@@ -182,13 +185,13 @@ class DownloadFile:
         # makedirs creates intermediate directories according to the umask
         # so we have to set the mode we want on the intermediate directories
         # then restore the original setting after
-        old_umask = os.umask(MC_MODE)
-        os.makedirs(self.get_path(), MC_MODE)
+        old_umask = os.umask(DIR_MASK)
+        os.makedirs(self.get_path(), DIR_MODE)
         os.umask(old_umask)
 
     """
     Master download function
-    Returns nothin; when this is completes, the file has either been
+    Returns nothing; when this is completes, the file has either been
     downloaded into the indicated location, or an error has been raised.
     1 - Check for file existence (and hash correctness if existing)
     2 - Check for path existence and create if missing
@@ -210,6 +213,9 @@ class DownloadFile:
         with open(self.get_fullpath(), "wb") as f:
             for data in response.iter_content():
                 f.write(data)
+
+        os.chmod(self.get_fullpath(), FILE_MODE)
+
 
         if not self.verify_file_hash():
             raise ValueError("File downloaded from {} to {} failed sha1 hash verification."\
