@@ -2,12 +2,16 @@
 import subprocess
 import os
 import json
+from json.decoder import JSONDecodeError
 from nydus.common import validity
 from nydus.client import utils
 from nydus.common import MCAccount
 
 # Class for storing everything we need to launch
 # a specific version of Minecraft
+
+VERSIONS_KEY = "versions"
+VERSIONS_ID_KEY = "id"
 
 # The json at ~/.minecraft/versions/version_manifest_v2.json has info on all the
 # different Minecraft versions available. Specifically, it gives where to
@@ -170,7 +174,6 @@ class MCVersion:
     already exist.
     """
     def download_json_file(self):
-        pass
 
     """
     Returns a boolean. True if the json file defining this Minecraft
@@ -182,9 +185,14 @@ class MCVersion:
     """
     Returns a string; the path to the file that tells us everything about
     this Minecraft version.
+    Usually of the form
+    /home/<username/.minecraft/versions/<version>/<version>.json
     """
     def get_json_file(self):
-        pass
+        # We don't bother looking up the manifest file
+        # because it only includes the download link, not
+        # the path for local storage.
+        return os.path.join(self.game_dir, "versions", self.version, "{}.json".format(self.version))
 
     """
     Launches an instance of Minecraft of the version

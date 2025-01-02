@@ -61,7 +61,7 @@ def read_json_file(filepath):
 
         try:
             data = json.load(f)
-        except JsonDecodeError as e:
+        except JSONDecodeError as e:
             raise ValueError("Failed to parse json in {} at line {} col {} char {}"\
                     .format(filepath, e.lineno, e.colno, e.pos))
     return data
