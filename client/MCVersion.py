@@ -139,10 +139,21 @@ class MCVersion:
     to that file is the log config parameter's value.
     This function finds that xml file and saves the path
     in the relevant class attribute.
+    If there are multiple xml files, the first one found will be used.
     Raises an Exception if such a file can't be found.
     """
     def find_log_config(self):
-        pass
+        log_cdir = os.path.join(self.assets_dir, "log_configs")
+        if not os.path.isdir(log_cdir):
+            raise OSError("No directory at {} to get Log4J config.".format(log_cdir))
+
+        contents = os.listdir(log_cdir)
+        for name in contents:
+            if name.endswith(".xml") and os.path.isfile(name):
+                self.log_config = os.path.join(log_cdir, name)
+                return
+
+        raise OSError("No xml file in {} to get Log4J config from.".format(log_cdir))
 
     """
     Reads the json file defining this Minecraft version.
