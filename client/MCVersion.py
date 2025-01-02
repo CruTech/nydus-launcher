@@ -6,12 +6,16 @@ from json.decoder import JSONDecodeError
 from nydus.common import validity
 from nydus.client import utils
 from nydus.common import MCAccount
+from nydus.client.DownloadFile import DownloadFile
 
 # Class for storing everything we need to launch
 # a specific version of Minecraft
 
 VERSIONS_KEY = "versions"
 VERSIONS_ID_KEY = "id"
+VERSIONS_TYPE_KEY = "type"
+VERSIONS_URL_KEY = "url"
+VERSIONS_SHA1_KEY = "sha1"
 
 # The json at ~/.minecraft/versions/version_manifest_v2.json has info on all the
 # different Minecraft versions available. Specifically, it gives where to
@@ -172,9 +176,60 @@ class MCVersion:
     """
     Downloads the version-defining json file if it doesn't
     already exist.
+    Note this uses the version manifest json file to do the downloading,
+    which won't have entries for OptiFine. The OptiFine JSON needs
+    to already exist, so this method will never be called.
     """
     def download_json_file(self):
+        manifest = utils.get_version_manifest()
+        with open(manifest, "r") as f:
+            try:
+                manifest_json = json.load(f)
+            except JSONDecodeError as e:
+                raise ValueError("Failed to parse json in {} at line {} col {} char {}"\
+                        .format(filepath, e.lineno, e.colno, e.pos))
+        
+        versions_list = manifest_json.get(VERSIONS_KEY)
+        if versions_list == None:
+            raise KeyError("JSON in {} had no key '{}'; couldn't get information on Minecraft versions.".format(manifest, VERSIONS_KEY))
 
+        for entry in versions_list:
+            # We expect the versions list to contain dictionaries,
+            # with keys 'id', 'type', 'url', and 'sha1'.
+            # 'id' tells us the name of the version. We're looking
+            # for an entry with the same id as the version we're trying
+            # to process.
+            # 'type' overwrites version_type if it's there
+            # 'url' and 'sha1' go into downloading the file.
+            # Anything that appears malformed we just skip; no need to raise
+            # Exceptions.
+
+            vers_id = entry.get(VERSIONS_ID_KEY)
+            if vers_id == None:
+                continue
+
+            if vers_id == self.version:
+                # We've found the entry for our version
+                # Wrong structure now is reason to raise an exception.
+
+                vers_type = entry.get(VERSIONS_TYPE_KEY)
+                vers_sha1 = entry.get(VERSIONS_SHA1_KEY)
+                vers_url = entry.get(VERSIONS_URL_KEY)
+                
+                if vers_type != None:
+                    self.version_type = vers_type
+
+                if vers_url == None:
+                    raise KeyError("No key '{}' for version {} in manifest file {}; could not download missing JSON file for this version due to missing URL.".format(VERSIONS_URL_KEY, vers_id, manifest))
+
+                if vers_sha1 == None:
+                    raise KeyError("No key '{}' for version {} in manifest file {}; could not download missing JSON file for this version due to missing hash.".format(VERSIONS_SHA1_KEY, vers_id, manifest))
+
+                df = DownloadFile(vers_url, vers_sha1, name=vers_id, path=self.get_json_file())
+                df.download()
+
+                # If downloading succeeded, exit the loop
+                return
     """
     Returns a boolean. True if the json file defining this Minecraft
     version exists; false if it doesn't.
