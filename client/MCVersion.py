@@ -34,6 +34,7 @@ PATH_KEY = "path"
 DESIRED_ACTION = "allow"
 DESIRED_OS = "linux"
 
+CPJAR_SEPARATOR = ":"
 
 # TODO
 # There are lots more parameters in the version json file that this
@@ -71,54 +72,6 @@ DESIRED_OS = "linux"
 # so there needs to be a facility for detecting inheritance and doing
 # everything in the ancestor version also.
 
-
-# Sample launch:
-# "java -cp {} -Xmx2G -XX:+UnlockExperimentalVMOptions -XX:+UseG1GC -XX:G1NewSizePercent=20 -XX:G1ReservePercent=20 -XX:MaxGCPauseMillis=50 -XX:G1HeapRegionSize=32M -Dlog4j.configurationFile=/home/<username>/.minecraft/assets/log_configs/client-1.12.xml net.minecraft.client.main.Main --username {} --version 1.20.6 --gameDir /home/<username>/.minecraft --assetsDir /home/<username>/.minecraft/assets --assetIndex 16 --uuid {} --accessToken {} --clientId {} --xuid {} --userType msa --versionType release --quickPlayPath /home/<username>/.minecraft/quickPlay/java/1723272866743.json".format(cpjars, mc_username, mc_uuid, mc_access_tok, client_id, xuid)
-
-# Important points
-# -cp is the list of jarfiles needed. You get the list from the version JSON file,
-# expand to absolute paths for each jar, and concatentate them all colon-separated.
-# -cp is easy.
-
-# -Dlog4j.configurationFile just make it whatever xml file is under .minecraft/assets/log_configs.
-# But also that option is under "logging" in the version JSON file.
-
-# net.minecraft.client.main.Main is the main class. It's found under the mainClass key in
-# the version JSON file.
-
-# --username, --version, --uuid, and --accessToken are all received from the Nydus Server.
-
-# --gameDir is obvious; it'll always be the same.
-
-# --assetsDir looks like it'll always be the same.
-
-# --assetIndex we can probably just keep the same.
-
-# --clientId's source is not known, but it is known that Minecraft will
-# launch without it, so just don't include it.
-
-# --xuid's value can be found in .minecraft/launcher_accounts.json.
-# Under the "accounts" key there are alphanumeric keys which are seemingly
-# recording the accounts which have logged in to the Minecraft launcher.
-# Each of these has a "remoteId" key which is the value to give to xuid.
-# However this requires someone to have already logged in as that user to
-# the Minecraft launcher, which won't be the case in our situation.
-# And we know experimentally Minecraft will launch without --xuid, so
-# just don't include it.
-
-# --userType looks like something we can just leave.
-
-# --versionType is probably fine. Might want to check that OptiFine
-# uses the same, but other than that there's probably nothing to do there.
-
-# --quickPlayPath can probably be ommitted; the path given to it isn't
-# even there on the filesystem. And I assume it's something to do with getting
-# the launcher to open a preferred Minecraft instance quickly. Since the Nydus
-# launcher specifies the desired Minecraft instance and opens it directly,
-# that's irrelevant to our situation.
-
-
-# Conclusion:
 # For a successful Minecraft launch, we want
 # -cp: jars optained from version JSON
 # -Dlog4j.configurationFile: whatever xml is under .minecraft/assets/log_configs but get correct answer from version JSON
@@ -567,8 +520,49 @@ class MCVersion:
 
 
     """
+    Returns a colon-concatenated string of absolute paths to all the jar files.
+    """
+    def get_cpjars(self):
+        jarpaths = []
+        for jar in self.jars:
+            if isinstance(jar, str):
+                jarpaths.append(jar)
+            elif isinstance(jar, DownloadFile):
+                jarpaths.append(jar.get_fullpath())
+            else:
+                raise TypeError("Entry in Jars list of unexpected type: {}".format(type(jar)))
+
+        return CPJAR_SEPARATOR.join(jarpaths)
+
+    """
     Launches an instance of Minecraft of the version
     stored in this class.
     """
     def launch(self):
-        pass
+        self.download_all()
+
+        logc_path = ""
+        if isinstance(self.log_config, str):
+            logc_path = self.log_config
+        elif isinstance(self.log_config, DownloadFile):
+            logc_path = self.log_config.get_fullpath()
+        else:
+            raise TypeError("In version {} found log config of unexpected type: {}".format(self.version, type(self.log_config)))
+
+        launch_command = "java -cp {} -Xmx2G -XX:+UnlockExperimentalVMOptions -XX:+UseG1GC -XX:G1NewSizePercent=20 -XX:G1ReservePercent=20 -XX:MaxGCPauseMillis=50 -XX:G1HeapRegionSize=32M -Dlog4j.configurationFile={} {} --username {} --version {} --gameDir {} --assetsDir {} --assetIndex 16 --uuid {} --accessToken {} --userType msa --versionType {}".format(
+            self.get_cpjars(),
+            logc_path,
+            self.main_class,
+            self.mc_account.get_username(),
+            self.version,
+            self.game_dir,
+            self.assets_dir,
+            self.mc_account.get_uuid(),
+            self.mc_account.get_token(),
+            self.version_type
+        )
+
+        launch_list = launch_command.split()
+        subprocess.run(launch_list)
+
+        # TODO detect when it finishes
