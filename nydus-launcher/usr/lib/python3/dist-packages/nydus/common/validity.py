@@ -357,7 +357,7 @@ It must be
 2) a valid python identified
 3) not overlap with any existing Nydus Config class attributes
 """
-def is_valid_varname(varname)
+def is_valid_varname(varname):
     if not isinstance(varrname, str):
         return False
     if not varname.isidentifier():
