@@ -5,8 +5,7 @@ import sys
 import unittest
 import pwd
 
-sys.path.append(os.path.abspath('../nydus-client'))
-from common import *
+from nydus.common import *
 
 class TestMinecraftPath(unittest.TestCase):
 
