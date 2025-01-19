@@ -1,3 +1,10 @@
+nydus-launcher (1.0.1) jammy; urgency=medium
+
+  * Packaging works.
+  * Added a package for tests.
+
+ -- Christopher Irving <the.earthlord3@gmail.com>  Sun, 19 Jan 2025 14:34:10 +1100
+
 nydus-launcher (1.0.0) jammy; urgency=medium
 
   * First packaging
