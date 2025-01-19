@@ -1,0 +1,57 @@
+Source: nydus-launcher
+Section: net
+Priority: optional
+Build-Depends:  debhelper-compat (= 13)
+Maintainer: Christopher Irving <the.earthlord3@gmail.com>
+
+Package: nydus-server
+Architecture: any
+Depends: python3, nydus-common, 
+Description: Server for Nydus Launcher
+ The Nydus Launcher is a custom distributed Minecraft launcher
+ which allows clients to launch Minecraft using access tokens obtained
+ from a central server over the network. This means instances of Minecraft
+ can be launched without the players knowing the credentials of the
+ Minecraft account they are using.
+ This package contains the Nydus server, the program which holds
+ the authenticated accounts and allocates them to clients.
+
+Package: nydus-client
+Architecture: any
+Depends: python3, nydus-common, minecraft-launcher
+Description: Client for Nydus Launcher
+ The Nydus Launcher is a custom distributed Minecraft launcher
+ which allows clients to launch Minecraft using access tokens obtained
+ from a central server over the network. This means instances of Minecraft
+ can be launched without the players knowing the credentials of the
+ Minecraft account they are using.
+ This package contains the Nydus client, the program which requests
+ access tokens from the server, downloads needed files, and launches
+ Minecraft. 
+
+Package: nydus-cli
+Architecture: any
+Depends: python3, nydus-common, nydus-server
+Description: Command-line interface for Nydus Launcher
+ The Nydus Launcher is a custom distributed Minecraft launcher
+ which allows clients to launch Minecraft using access tokens obtained
+ from a central server over the network. This means instances of Minecraft
+ can be launched without the players knowing the credentials of the
+ Minecraft account they are using.
+ This package contains the Nydus cli, a program which the administrator
+ can use to manually modify the Nydus server's account allocation state
+ with a selection of commands.
+
+Package: nydus-common
+Architecture: any
+Depends: python3
+Description: Server for Nydus Launcher
+ The Nydus Launcher is a custom distributed Minecraft launcher
+ which allows clients to launch Minecraft using access tokens obtained
+ from a central server over the network. This means instances of Minecraft
+ can be launched without the players knowing the credentials of the
+ Minecraft account they are using.
+ This package contains the Nydus client, the program which requests
+ access tokens from the server, downloads needed files, and launches
+ Minecraft. 
+

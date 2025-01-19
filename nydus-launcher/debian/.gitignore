@@ -1,0 +1,11 @@
+
+# Byproducts of building
+
+.debhelper
+debhelper-build-stamp
+nydus-server
+nydus-cli
+nydus-client
+nydus-common
+files
+*.substvars
