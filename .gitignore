@@ -1,1 +1,7 @@
-*__pycache__*
+# Generated files
+*.build
+*.buildinfo
+*.changes
+
+# Generated packages
+*.deb
