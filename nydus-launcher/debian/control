@@ -58,6 +58,7 @@ Description: Server for Nydus Launcher
 Package: nydus-test
 Architecture: any
 Depends: python3, nydus-common, nydus-cli, nydus-client, nydus-server
+Description: Tests for the Nydus Launcher
  The Nydus Launcher is a custom distributed Minecraft launcher
  which allows clients to launch Minecraft using access tokens obtained
  from a central server over the network. This means instances of Minecraft

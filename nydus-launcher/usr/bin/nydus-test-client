@@ -5,7 +5,7 @@ import sys
 import unittest
 import pwd
 
-from nydus.common import *
+from nydus.client.utils import *
 
 class TestMinecraftPath(unittest.TestCase):
 

@@ -7,5 +7,6 @@ nydus-server
 nydus-cli
 nydus-client
 nydus-common
+nydus-test
 files
 *.substvars
