@@ -4,22 +4,6 @@ import unittest
 
 from nydus.common.validity import *
 
-def run_tests():
-    unittest.main()
-
-if __name__ == "__main__":
-    run_tests()
-
-class TestThing(unittest.TestCase):
-
-    def test_something(self):
-        self.assertEqual(1, 1)
-        with self.assertRaises(AssertionError):
-            raise AssertionError
-        self.assertTrue(True)
-        self.assertFalse(False)
-
-
 class TestValidIPaddr(unittest.TestCase):
 
     def test_simple(self):
@@ -123,3 +107,8 @@ class TestValidPort(unittest.TestCase):
     def test_type4(self):
         self.assertFalse(is_valid_port(78.0))
 
+def run_tests():
+    unittest.main()
+
+if __name__ == "__main__":
+    run_tests()
