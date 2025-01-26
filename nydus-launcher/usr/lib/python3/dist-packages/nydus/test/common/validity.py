@@ -69,34 +69,34 @@ class TestValidIPaddr(unittest.TestCase):
 class TestValidPort(unittest.TestCase):
     
     def test_min(self):
-        self.assertTrue(is_valid_port(0))
+        self.assertTrue(is_valid_port("0"))
 
     def test_max(self):
-        self.assertTrue(is_valid_port(2**16 - 1))
+        self.assertTrue(is_valid_port(str(2**16 - 1)))
 
-    def test_strmin(self):
-        self.assertFalse(is_valid_port("0"))
+    def test_intmin(self):
+        self.assertFalse(is_valid_port(0))
 
-    def test_strmax(self):
-        self.assertFalse(is_valid_port(str(2**16 - 1)))
+    def test_intmax(self):
+        self.assertFalse(is_valid_port(2**16 - 1))
 
     def test_under(self):
-        self.assertFalse(is_valid_port(-1))
+        self.assertFalse(is_valid_port("-1"))
 
     def test_over(self):
-        self.assertFalse(is_valid_port(2**16))
+        self.assertFalse(is_valid_port(str(2**16)))
 
     def test_admin(self):
-        self.assertTrue(is_valid_port(1024))
+        self.assertTrue(is_valid_port("1024"))
 
     def test_ssh(self):
-        self.assertTrue(is_valid_port(22))
+        self.assertTrue(is_valid_port("22"))
 
     def test_nydus(self):
-        self.assertTrue(is_valid_port(2011))
+        self.assertTrue(is_valid_port("2011"))
 
     def test_type1(self):
-        self.assertFalse(is_valid_port("8036"))
+        self.assertFalse(is_valid_port(8036))
 
     def test_type2(self):
         self.assertFalse(is_valid_port(True))
