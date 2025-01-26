@@ -1,3 +1,4 @@
 usr/bin/nydus-test
-usr/lib/python3/dist-packages/nydus/test/client/utils
-usr/share/man/man1/nydus-test-client.1
+usr/lib/python3/dist-packages/nydus/test/client/utils.py
+usr/lib/python3/dist-packages/nydus/test/common/validity.py
+usr/share/man/man1/nydus-test.1
