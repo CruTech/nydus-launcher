@@ -1,2 +1,6 @@
 usr/bin
+usr/lib/python3/dist-packages/nydus/test/client
+usr/lib/python3/dist-packages/nydus/test/cli
+usr/lib/python3/dist-packages/nydus/test/server
+usr/lib/python3/dist-packages/nydus/test/common
 usr/share/man/man1
