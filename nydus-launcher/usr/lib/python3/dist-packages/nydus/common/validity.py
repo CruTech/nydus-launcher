@@ -113,6 +113,14 @@ Given a string, tells you if the string
 represents an integer
 """
 def is_integer(num):
+
+    if not isinstance(num, str):
+        return False
+
+    # If the number is negative we need to remove the minus first
+    if len(num) > 0 and num[0] == "-":
+        num = num[1:]
+
     if not num.isdecimal():
         return False
     try:
@@ -132,7 +140,7 @@ def is_valid_version(vers, num_segments):
     if not isinstance(num_segments, int):
         raise TypeError("num_segments for is_valid_version must be an integer. Was {}".format(type(num_segments)))
 
-    if not is_positive_integer(num_segments):
+    if num_segments < 1:
         raise ValueError("num_segments for is_valid_version must be a positive integer. Was {}".format(num_segments))
 
     if not is_nonempty_str(vers):

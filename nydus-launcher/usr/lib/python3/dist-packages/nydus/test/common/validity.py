@@ -121,16 +121,16 @@ class TestInteger(unittest.TestCase):
         self.assertTrue(is_integer("0"))
 
     def test_int(self):
-        self.assertFalse(459)
+        self.assertFalse(is_integer(459))
 
     def test_bool(self):
-        self.assertFalse(True)
+        self.assertFalse(is_integer(True))
 
     def test_list(self):
-        self.assertFalse(["23", "45"])
+        self.assertFalse(is_integer(["23", "45"]))
 
     def test_float(self):
-        self.assertFalse(9554.00)
+        self.assertFalse(is_integer(9554.00))
 
 
 class TestPosInteger(unittest.TestCase):
@@ -249,17 +249,50 @@ class TestLimitedInteger(unittest.TestCase):
     def test_wide_farunder(self):
         self.assertFalse(is_limited_integer("-1786", -1200, 1820))
 
+    def test_minval1(self):
+        with self.assertRaises(AssertionError):
+            is_limited_integer("5", True, 10)
+
+    def test_minval1(self):
+        with self.assertRaises(AssertionError):
+            is_limited_integer("5", "1", 10)
+
+    def test_maxval1(self):
+        with self.assertRaises(AssertionError):
+            is_limited_integer("5", 1, 10.0)
+
+    def test_maxval1(self):
+        with self.assertRaises(AssertionError):
+            is_limited_integer("5", 1, "10")
+
+    def test_unrange1(self):
+        with self.assertRaises(AssertionError):
+            is_limited_integer("14", 20, 10)
+
+    def test_unrange2(self):
+        with self.assertRaises(AssertionError):
+            is_limited_integer("-50", -23, -64)
+
+    def test_norange1(self):
+        self.assertTrue(is_limited_integer("0", 0, 0))
+
+    def test_norange2(self):
+        self.assertTrue(is_limited_integer("57", 57, 57))
+
+    def test_norange3(self):
+        self.assertTrue(is_limited_integer("-13", -13, -13))
+
     def test_int(self):
-        self.assertFalse(is_limited_integer(19))
+        self.assertFalse(is_limited_integer(19, 1, 52))
 
     def test_bool(self):
-        self.assertFalse(is_limited_integer(False))
+        self.assertFalse(is_limited_integer(False, -1, 1))
 
     def test_list(self):
-        self.assertFalse(is_limited_integer(["88434", "11111"]))
+        self.assertFalse(is_limited_integer(["88434", "11111"], 3, 4))
 
     def test_float(self):
-        self.assertFalse(is_limited_integer(9248.00))
+        self.assertFalse(is_limited_integer(9248.00, 9000, 10000))
 
 
 class TestVersion(unittest.TestCase):

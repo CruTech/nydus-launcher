@@ -1,3 +1,10 @@
+nydus-launcher (1.0.2) jammy; urgency=medium
+
+  * Tests should run from the installed package
+  * Started writing tests for common.validity
+
+ -- Christopher Irving <the.earthlord3@gmail.com>  Mon, 27 Jan 2025 14:24:02 +1100
+
 nydus-launcher (1.0.1) jammy; urgency=medium
 
   * Packaging works.
