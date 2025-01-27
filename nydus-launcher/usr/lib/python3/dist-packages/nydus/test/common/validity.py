@@ -66,6 +66,7 @@ class TestValidIPaddr(unittest.TestCase):
     def test_nodots(self):
         self.assertFalse(is_valid_ipaddr("1019914469"))
 
+
 class TestValidPort(unittest.TestCase):
     
     def test_min(self):
@@ -107,5 +108,160 @@ class TestValidPort(unittest.TestCase):
     def test_type4(self):
         self.assertFalse(is_valid_port(78.0))
 
+
+class TestInteger(unittest.TestCase):
+
+    def test_pos(self):
+        self.assertTrue(is_integer("12345"))
+
+    def test_neg(self):
+        self.assertTrue(is_integer("-9582"))
+
+    def test_zero(self):
+        self.assertTrue(is_integer("0"))
+
+    def test_int(self):
+        self.assertFalse(459)
+
+    def test_bool(self):
+        self.assertFalse(True)
+
+    def test_list(self):
+        self.assertFalse(["23", "45"])
+
+    def test_float(self):
+        self.assertFalse(9554.00)
+
+
+class TestPosInteger(unittest.TestCase):
+
+    def test_pos(self):
+        self.assertTrue(is_positive_integer("12345"))
+
+    def test_neg(self):
+        self.assertFalse(is_positive_integer("-9582"))
+
+    def test_one(self):
+        self.assertTrue(is_positive_integer("1"))
+
+    def test_minusone(self):
+        self.assertFalse(is_positive_integer("-1"))
+
+    def test_zero(self):
+        self.assertFalse(is_positive_integer("0"))
+
+    def test_int(self):
+        self.assertFalse(is_positive_integer(459))
+
+    def test_bool(self):
+        self.assertFalse(is_positive_integer(True))
+
+    def test_list(self):
+        self.assertFalse(is_positive_integer(["23", "45"]))
+
+    def test_float(self):
+        self.assertFalse(is_positive_integer(9554.00))
+
+
+class TestNonNegInteger(unittest.TestCase):
+
+    def test_pos(self):
+        self.assertTrue(is_nonnegative_integer("12345"))
+
+    def test_neg(self):
+        self.assertFalse(is_nonnegative_integer("-9582"))
+
+    def test_one(self):
+        self.assertTrue(is_nonnegative_integer("1"))
+
+    def test_minusone(self):
+        self.assertFalse(is_nonnegative_integer("-1"))
+
+    def test_zero(self):
+        self.assertTrue(is_nonnegative_integer("0"))
+
+    def test_int(self):
+        self.assertFalse(is_nonnegative_integer(459))
+
+    def test_bool(self):
+        self.assertFalse(is_nonnegative_integer(True))
+
+    def test_list(self):
+        self.assertFalse(is_nonnegative_integer(["23", "45"]))
+
+    def test_float(self):
+        self.assertFalse(is_nonnegative_integer(9554.00))
+
+
+class TestLimitedInteger(unittest.TestCase):
+
+    def test_mid(self):
+        self.assertTrue(is_limited_integer("5", 1, 10))
+
+    def test_bot(self):
+        self.assertTrue(is_limited_integer("1", 1, 10))
+
+    def test_top(self):
+        self.assertTrue(is_limited_integer("10", 1, 10))
+
+    def test_over(self):
+        self.assertFalse(is_limited_integer("11", 1, 10))
+
+    def test_under(self):
+        self.assertFalse(is_limited_integer("0", 1, 10))
+
+    def test_neg_mid(self):
+        self.assertTrue(is_limited_integer("-20", -35, -11))
+
+    def test_neg_bot(self):
+        self.assertTrue(is_limited_integer("-35", -35, -11))
+
+    def test_neg_top(self):
+        self.assertTrue(is_limited_integer("-11", -35, -11))
+
+    def test_neg_over(self):
+        self.assertFalse(is_limited_integer("-10", -35, -11))
+
+    def test_neg_under(self):
+        self.assertFalse(is_limited_integer("-36", -35, -11))
+
+    def test_wide_pos(self):
+        self.assertTrue(is_limited_integer("350", -1200, 1820))
+
+    def test_wide_neg(self):
+        self.assertTrue(is_limited_integer("-950", -1200, 1820))
+
+    def test_wide_mid(self):
+        self.assertTrue(is_limited_integer("310", -1200, 1820))
+
+    def test_wide_zero(self):
+        self.assertTrue(is_limited_integer("0", -1200, 1820))
+
+    def test_wide_over(self):
+        self.assertFalse(is_limited_integer("1821", -1200, 1820))
+
+    def test_wide_under(self):
+        self.assertFalse(is_limited_integer("-1201", -1200, 1820))
+
+    def test_wide_farover(self):
+        self.assertFalse(is_limited_integer("3218", -1200, 1820))
+
+    def test_wide_farunder(self):
+        self.assertFalse(is_limited_integer("-1786", -1200, 1820))
+
+    def test_int(self):
+        self.assertFalse(is_limited_integer(19))
+
+    def test_bool(self):
+        self.assertFalse(is_limited_integer(False))
+
+    def test_list(self):
+        self.assertFalse(is_limited_integer(["88434", "11111"]))
+
+    def test_float(self):
+        self.assertFalse(is_limited_integer(9248.00))
+
+
+
 if __name__ == "__main__":
-    run_tests()
+    unittest.main()

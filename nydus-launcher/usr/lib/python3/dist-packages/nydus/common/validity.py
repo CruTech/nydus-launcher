@@ -71,6 +71,7 @@ you define
 def is_limited_integer(num, min_val, max_val):
     assert isinstance(min_val, int), "Min val of integer limit must be an integer"
     assert isinstance(max_val, int), "Max val of integer limit must be an integer"
+    assert min_val <= max_val, "Min val of integer limit must be below max val; gave min {} and max {}".format(min_val, max_val)
     if not is_integer(num):
         return False
     num = int(num)
