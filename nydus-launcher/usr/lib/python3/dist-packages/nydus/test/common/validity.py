@@ -107,8 +107,5 @@ class TestValidPort(unittest.TestCase):
     def test_type4(self):
         self.assertFalse(is_valid_port(78.0))
 
-def run_tests():
-    unittest.main()
-
 if __name__ == "__main__":
     run_tests()

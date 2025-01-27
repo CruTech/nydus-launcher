@@ -386,8 +386,5 @@ class TestIsSha1(unittest.TestCase):
         with self.assertRaises(AssertionError):
             is_sha1(6591234561228020168789081723944958.836824)
 
-def run_tests():
-    unittest.main()
-
 if __name__ == "__main__":
     run_tests()
