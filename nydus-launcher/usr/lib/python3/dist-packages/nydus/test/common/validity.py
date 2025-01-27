@@ -262,6 +262,70 @@ class TestLimitedInteger(unittest.TestCase):
         self.assertFalse(is_limited_integer(9248.00))
 
 
+class TestVersion(unittest.TestCase):
+
+    def test_two(self):
+        self.assertTrue(is_valid_version("1.0", 2))
+
+    def test_three(self):
+        self.assertTrue(is_valid_version("1.0.0", 3))
+
+    def test_four(self):
+        self.assertTrue(is_valid_version("1.0.0.0", 4))
+
+    def test_five(self):
+        self.assertTrue(is_valid_version("1.0.0.0.0", 5))
+
+    def test_complex(self):
+        self.assertTrue(is_valid_version("2.18.9", 3))
+
+    def test_neg(self):
+        self.assertFalse(is_valid_version("-1.0.0", 3))
+
+    def test_empty_one(self):
+        self.assertFalse(is_valid_version(".1.0", 3))
+
+    def test_empty_two(self):
+        self.assertFalse(is_valid_version("2..5", 3))
+
+    def test_empty_three(self):
+        self.assertFalse(is_valid_version("1.3.", 3))
+
+
+class TestMinecraftVersion(unittest.TestCase):
+
+    def test_simple1(self):
+        self.assertTrue("1.20.4")
+
+    def test_simple2(self):
+        self.assertTrue("1.20.6")
+
+    def test_simple3(self):
+        self.assertTrue("1.21.4")
+
+    def test_opti1(self):
+        self.assertTrue("1.20.4-OptiFine_HD_U_I7")
+
+    def test_opti2(self):
+        self.assertTrue("1.21.3-OptiFine_HD_U_J2")
+
+    def test_rc1(self):
+        self.assertTrue("1.21-rc1")
+
+    def test_rc2(self):
+        self.assertTrue("1.21.4-rc3")
+
+    def test_rc2(self):
+        self.assertTrue("1.20-rc1")
+
+    def test_pre1(self):
+        self.assertTrue("1.21.4-pre2")
+
+    def test_pre2(self):
+        self.assertTrue("1.20.3-pre4")
+
+    def test_pre3(self):
+        self.assertTrue("1.20-pre6")
 
 if __name__ == "__main__":
     unittest.main()

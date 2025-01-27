@@ -151,8 +151,6 @@ def is_valid_version(vers, num_segments):
 """
 Returns True if the given string is a valid
 Minecraft version. False otherwise.
-TODO
-Requires work.
 The general form of X.Y.Z is easy to test for.
 But we also allow X.Y.Z-string
 and X.Y-string
